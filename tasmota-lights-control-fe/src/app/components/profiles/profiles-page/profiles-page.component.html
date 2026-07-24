@@ -11,7 +11,7 @@
 @if (showForm()) {
   <section class="editor">
     <h2>{{ editing() ? 'Edit profile' : 'New profile' }}</h2>
-    <app-profile-form [editing]="editing()" (save)="save($event)" (cancel)="showForm.set(false)" />
+    <app-profile-form [editing]="editing()" [pending]="pending()" [failure]="failure()" (fieldChanged)="clearField($event)" (save)="save($event)" (cancel)="showForm.set(false)" />
   </section>
 }
 <section class="profile-grid">

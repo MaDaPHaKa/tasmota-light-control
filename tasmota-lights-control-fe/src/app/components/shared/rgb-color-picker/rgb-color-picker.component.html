@@ -1,1 +1,22 @@
-<div class="picker"><input type="color" [value]="value()" [disabled]="disabled()" (input)="normalize($any($event.target).value)"><mat-form-field appearance="outline"><mat-label>Hex color</mat-label><input matInput [value]="value()" [disabled]="disabled()" (change)="normalize($any($event.target).value)"></mat-form-field></div>
+<div class="picker">
+  <color-picker
+    format="hex"
+    [value]="value()"
+    (valueChange)="updateFromPicker($event)"
+    [hideAlpha]="true"
+    [disabled]="disabled()"
+  />
+  <mat-form-field appearance="outline">
+    <mat-label>Hex color</mat-label>
+    <input
+      #hexInput
+      matInput
+      [value]="value()"
+      [disabled]="disabled()"
+      (input)="updateFromText($any($event.target).value)"
+      aria-describedby="rgb-format"
+    />
+    <mat-hint id="rgb-format">Uppercase #RRGGBB</mat-hint>
+  </mat-form-field>
+  <span class="swatch" [style.background-color]="value()" aria-hidden="true"></span>
+</div>
