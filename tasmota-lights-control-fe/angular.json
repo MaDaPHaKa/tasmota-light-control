@@ -106,7 +106,8 @@
               "buildTarget": "tasmota-lights-control-fe:build:production"
             },
             "development": {
-              "buildTarget": "tasmota-lights-control-fe:build:development"
+              "buildTarget": "tasmota-lights-control-fe:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
