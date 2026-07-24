@@ -1,0 +1,1 @@
+@switch(state().kind){@case('loading'){<span class="loading">Checking…</span>}@case('loaded'){<span class="online">{{loaded()?.reachability}} · {{loaded()?.power ?? 'unknown'}}</span>}@case('error'){<span class="error">{{error()}}</span>}@default{<span class="idle">Not checked</span>}}

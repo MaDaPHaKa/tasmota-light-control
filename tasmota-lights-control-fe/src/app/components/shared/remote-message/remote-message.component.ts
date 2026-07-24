@@ -1,0 +1,2 @@
+import { ChangeDetectionStrategy, Component, input } from '@angular/core'; import { ApiFailure } from '@model/api-error.model';
+@Component({selector:'app-remote-message',standalone:true,templateUrl:'./remote-message.component.html',styleUrl:'./remote-message.component.scss',changeDetection:ChangeDetectionStrategy.OnPush}) export class RemoteMessageComponent {readonly failure=input<ApiFailure|null>(null);readonly message=input<string|null>(null);}

@@ -1,0 +1,30 @@
+<form novalidate (submit)="$event.preventDefault(); submit()">
+  <mat-form-field appearance="outline"
+    ><mat-label>Name</mat-label><input matInput [formField]="profileForm.name" /></mat-form-field
+  ><mat-form-field appearance="outline"
+    ><mat-label>Dimmer</mat-label
+    ><input matInput type="number" [formField]="profileForm.dimmer" /></mat-form-field
+  ><mat-radio-group [formField]="profileForm.mode"
+    ><mat-radio-button value="rgb">RGB</mat-radio-button
+    ><mat-radio-button value="color_temperature"
+      >Color temperature</mat-radio-button
+    ></mat-radio-group
+  >
+  @if (model().mode === 'rgb') {
+    <app-rgb-color-picker [(value)]="model().rgbColor" />
+  } @else {
+    <mat-form-field appearance="outline"
+      ><mat-label>Kelvin</mat-label
+      ><input matInput type="number" [formField]="profileForm.colorTemperatureKelvin"
+    /></mat-form-field>
+  }
+  <app-mode-preview
+    [color]="model().rgbColor"
+    [text]="model().mode === 'rgb' ? model().rgbColor : model().colorTemperatureKelvin + ' K'"
+    [dimmer]="model().dimmer"
+  />
+  <div class="actions">
+    <button mat-button type="button" (click)="cancel.emit()">Cancel</button
+    ><button mat-flat-button color="primary" type="submit" [disabled]="!profileForm().valid()">Save profile</button>
+  </div>
+</form>

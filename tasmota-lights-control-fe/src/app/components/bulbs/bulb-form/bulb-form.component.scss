@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+mat-form-field {
+  flex: 1 1 180px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.actions button:first-child {
+  margin-right: auto;
+}

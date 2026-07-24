@@ -1,0 +1,78 @@
+@use '@angular/material' as mat;
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2') format('woff2');
+  font-display: block;
+}
+
+.material-icons,
+.mat-icon {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'liga';
+}
+:root {
+  color-scheme: dark;
+  --color-background: #2e3440;
+  --color-surface: #3b4252;
+  --color-border: #4c566a;
+  --color-border-light: #616b7f;
+  --color-text: #eceff4;
+  --color-text-muted: #d8dee9;
+  --color-text-dim: #9aa5b8;
+  --color-primary: #88c0d0;
+  --color-focus: #8fbcbb;
+  --color-success: #a3be8c;
+  --color-warning: #ebcb8b;
+  --color-danger: #bf616a;
+}
+html {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$cyan-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: system-ui,
+      density: 0,
+    )
+  );
+  background: var(--color-background);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+button {
+  font-family: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.snackbar-success { --mat-snack-bar-container-color: #3d5943; --mat-snack-bar-supporting-text-color: #e4f0dc; }
+.snackbar-info { --mat-snack-bar-container-color: #365563; --mat-snack-bar-supporting-text-color: #e0f2f5; }
+.snackbar-error { --mat-snack-bar-container-color: #633b42; --mat-snack-bar-supporting-text-color: #ffe2e5; }

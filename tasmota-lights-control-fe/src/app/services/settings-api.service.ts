@@ -1,0 +1,2 @@
+import { Injectable, inject } from '@angular/core'; import { HttpClient } from '@angular/common/http'; import { ResetSettings } from '@model/settings.model';
+@Injectable({providedIn:'root'}) export class SettingsApiService { private readonly http=inject(HttpClient); private readonly url='/api/v1/settings/reset'; getResetSettings(){return this.http.get<ResetSettings>(this.url)} replaceResetSettings(settings:ResetSettings){return this.http.put<ResetSettings>(this.url,settings)} }

@@ -1,0 +1,1 @@
+@if(failure();as f){<div role="alert">{{f.message}}@if(f.requestId){<small>Request ID: {{f.requestId}}</small>}</div>}@else if(message()){<div role="status">{{message()}}</div>}
