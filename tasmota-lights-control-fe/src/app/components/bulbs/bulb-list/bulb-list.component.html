@@ -1,1 +1,13 @@
-<div class="list">@for(bulb of bulbs();track bulb.id){<article><div><strong>{{bulb.name}}</strong><span>{{bulb.ipAddress}}:{{bulb.port}}</span></div><app-bulb-status [state]="statuses().get(bulb.id)??{kind:'idle'}" [profileName]="profileName(statuses().get(bulb.id)?.kind==='loaded'?$any(statuses().get(bulb.id)).value.appliedProfileId:null)"/><div class="actions"><button mat-button [disabled]="pendingActionIds().has(bulb.id)" (click)="test.emit(bulb)">Test</button><button mat-button [disabled]="pendingActionIds().has(bulb.id)" (click)="reset.emit(bulb.id)">Reset</button><button mat-icon-button aria-label="Edit bulb" (click)="edit.emit(bulb)"><mat-icon>edit</mat-icon></button><button mat-icon-button aria-label="Refresh status" (click)="refreshStatus.emit(bulb.id)"><mat-icon>refresh</mat-icon></button><button mat-icon-button aria-label="Delete bulb" (click)="delete.emit(bulb)"><mat-icon>delete</mat-icon></button></div></article>}</div>
+<div class="list">@for(bulb of bulbs();track bulb.id){<article>
+        <div class="bulb-data"><strong>{{bulb.name}}</strong><span>{{bulb.ipAddress}}:{{bulb.port}}</span></div>
+        <div class="status"><app-bulb-status [state]="statuses().get(bulb.id)??{kind:'idle'}"
+                [profileName]="profileName(statuses().get(bulb.id)?.kind==='loaded'?$any(statuses().get(bulb.id)).value.appliedProfileId:null)" />
+        </div>
+        <div class="actions"><button mat-button [disabled]="pendingActionIds().has(bulb.id)"
+                (click)="test.emit(bulb)">Test</button><button mat-button [disabled]="pendingActionIds().has(bulb.id)"
+                (click)="reset.emit(bulb.id)">Reset</button><button mat-icon-button aria-label="Edit bulb"
+                (click)="edit.emit(bulb)"><mat-icon>edit</mat-icon></button><button mat-icon-button
+                aria-label="Refresh status"
+                (click)="refreshStatus.emit(bulb.id)"><mat-icon>refresh</mat-icon></button><button mat-icon-button
+                aria-label="Delete bulb" (click)="delete.emit(bulb)"><mat-icon>delete</mat-icon></button></div>
+    </article>}</div>

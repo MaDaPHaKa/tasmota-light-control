@@ -1,1 +1,25 @@
-:host{display:block}.online{color:var(--color-success)}.error{color:var(--color-danger)}.loading{color:var(--color-warning)}.idle{color:var(--color-text-dim)}
+:host {
+    display: block
+}
+
+d1{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.online {
+    color: var(--color-success)
+}
+
+.error {
+    color: var(--color-danger)
+}
+
+.loading {
+    color: var(--color-warning)
+}
+
+.idle {
+    color: var(--color-text-dim)
+}

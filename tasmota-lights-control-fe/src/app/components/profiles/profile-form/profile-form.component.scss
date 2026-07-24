@@ -1,1 +1,25 @@
-:host{display:block}form{display:flex;flex-direction:column;gap:14px;max-width:600px}mat-radio-group{display:flex;flex-wrap:wrap;gap:14px}.actions{display:flex;gap:8px}.actions button:first-child{margin-right:auto}
+:host {
+    display: block
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 600px
+}
+
+mat-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px
+}
+
+.actions {
+    display: flex;
+    gap: 8px
+}
+
+.actions button:first-child {
+    margin-right: auto
+}
