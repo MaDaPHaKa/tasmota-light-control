@@ -17,7 +17,7 @@ pub struct Link {
     pub bulb_id: Uuid,
     pub profile_id: Uuid,
 }
-#[derive(Serialize, Clone)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum ResultCode {
     Success,

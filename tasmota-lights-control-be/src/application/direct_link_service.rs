@@ -34,7 +34,9 @@ impl DirectLinkService {
                 Ok((bulb, profile))
             })
             .await?;
-        let endpoint = self.policy.endpoint(&bulb.ip_address, bulb.port)?;
+        let endpoint = self
+            .policy
+            .endpoint(&bulb.ip_address, i64::from(bulb.port))?;
         let command = command(
             profile.dimmer,
             &profile.mode,

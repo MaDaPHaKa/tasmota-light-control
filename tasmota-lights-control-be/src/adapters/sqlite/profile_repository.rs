@@ -21,11 +21,11 @@ pub fn profile_row(row: &Row<'_>) -> rusqlite::Result<Profile> {
     if id.parse::<Uuid>().is_err()
         || light(crate::domain::profile::LightInput {
             name: name.clone(),
-            dimmer,
+            dimmer: i64::from(dimmer),
             mode: mode.clone(),
             rgb_color: crate::domain::profile::RequiredOption(rgb_color.clone()),
             color_temperature_kelvin: crate::domain::profile::RequiredOption(
-                color_temperature_kelvin,
+                color_temperature_kelvin.map(i64::from),
             ),
         })
         .is_err()
@@ -49,7 +49,11 @@ pub fn list(connection: &Connection) -> AppResult<Vec<Profile>> {
     database(connection.prepare("SELECT id,name,dimmer,mode,rgb_color,color_temperature_kelvin,created_at,updated_at FROM profiles ORDER BY name_normalized,id")?.query_map([], profile_row)?.collect())
 }
 pub fn get(connection: &Connection, id: Uuid) -> AppResult<Profile> {
-    database(connection.query_row("SELECT id,name,dimmer,mode,rgb_color,color_temperature_kelvin,created_at,updated_at FROM profiles WHERE id=?1", [id.to_string()], profile_row)).map_err(|_| AppError::NotFound("profile"))
+    match connection.query_row("SELECT id,name,dimmer,mode,rgb_color,color_temperature_kelvin,created_at,updated_at FROM profiles WHERE id=?1", [id.to_string()], profile_row) {
+        Ok(profile) => Ok(profile),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Err(AppError::NotFound("profile")),
+        Err(_) => Err(AppError::Internal),
+    }
 }
 pub fn save(
     connection: &mut Connection,

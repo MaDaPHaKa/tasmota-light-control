@@ -48,15 +48,29 @@ impl ControlService {
         bulbs: Vec<Bulb>,
         command: Command,
     ) -> Operation {
+        let operation_started = std::time::Instant::now();
         let started_at = now();
         let mut indexed = stream::iter(bulbs.into_iter().enumerate().map(|(index, bulb)| {
             let client = self.client.clone();
             let command = command.clone();
             async move {
-                let status = match client.policy.endpoint(&bulb.ip_address, bulb.port) {
+                let target_started = std::time::Instant::now();
+                let status = match client
+                    .policy
+                    .endpoint(&bulb.ip_address, i64::from(bulb.port))
+                {
                     Ok(endpoint) => client.invoke(endpoint, command).await,
-                    Err(_) => ResultCode::DeviceError,
+                    Err(_) => {
+                        tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                        ResultCode::InvalidResponse
+                    }
                 };
+                tracing::info!(
+                    bulb_id=%bulb.id,
+                    result_code=?status,
+                    duration_ms=target_started.elapsed().as_millis(),
+                    "target call completed"
+                );
                 (
                     index,
                     TargetResult {
@@ -77,7 +91,7 @@ impl ControlService {
             .iter()
             .filter(|result| matches!(result.status, ResultCode::Success))
             .count();
-        Operation {
+        let result = Operation {
             operation: operation.into(),
             profile_id,
             started_at,
@@ -88,7 +102,17 @@ impl ControlService {
                 failed: results.len() - succeeded,
             },
             results,
-        }
+        };
+        tracing::info!(
+            operation,
+            profile_id=?profile_id,
+            target_count=result.summary.total,
+            succeeded=result.summary.succeeded,
+            failed=result.summary.failed,
+            duration_ms=operation_started.elapsed().as_millis(),
+            "control operation completed"
+        );
+        result
     }
 
     pub async fn apply(&self, profile_id: Uuid, ids: Vec<Uuid>) -> AppResult<Operation> {

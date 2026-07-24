@@ -1,5 +1,5 @@
 use crate::{
-    domain::settings::Settings,
+    domain::settings::{Settings, SettingsInput},
     error::{ApiJson, AppResult},
     http::dto::AppState,
 };
@@ -9,7 +9,14 @@ pub async fn get(State(state): State<AppState>) -> AppResult<Json<Settings>> {
 }
 pub async fn put(
     State(state): State<AppState>,
-    ApiJson(input): ApiJson<Settings>,
+    ApiJson(input): ApiJson<SettingsInput>,
 ) -> AppResult<Json<Settings>> {
-    Ok(Json(state.settings.save(input).await?))
+    let settings = state.settings.save(input).await?;
+    tracing::info!(
+        action = "replace",
+        resource = "reset_settings",
+        result_code = "success",
+        "CRUD completed"
+    );
+    Ok(Json(settings))
 }

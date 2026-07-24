@@ -26,8 +26,30 @@ impl BulbService {
             .await
     }
     pub async fn save(&self, id: Option<Uuid>, input: BulbInput) -> AppResult<Bulb> {
-        let endpoint = self.policy.endpoint(&input.ip_address, input.port)?;
-        let (normalized, name) = name(input.name)?;
+        let endpoint_result = self.policy.endpoint(&input.ip_address, input.port);
+        let name_result = name(input.name);
+        let mut fields = std::collections::BTreeMap::new();
+        let endpoint = match endpoint_result {
+            Ok(endpoint) => Some(endpoint),
+            Err(crate::error::AppError::Validation(errors)) => {
+                fields.extend(errors);
+                None
+            }
+            Err(error) => return Err(error),
+        };
+        let name = match name_result {
+            Ok(value) => Some(value),
+            Err(crate::error::AppError::Validation(errors)) => {
+                fields.extend(errors);
+                None
+            }
+            Err(error) => return Err(error),
+        };
+        if !fields.is_empty() {
+            return Err(crate::error::AppError::Validation(fields));
+        }
+        let endpoint = endpoint.ok_or(crate::error::AppError::Internal)?;
+        let (normalized, name) = name.ok_or(crate::error::AppError::Internal)?;
         let timestamp = now();
         let bulb = Bulb {
             id: id.unwrap_or_else(Uuid::new_v4),

@@ -48,12 +48,15 @@ pub fn list(connection: &Connection) -> AppResult<Vec<Bulb>> {
     database(connection.prepare("SELECT id,name,ip_address,port,created_at,updated_at FROM bulbs ORDER BY name_normalized,id")?.query_map([], bulb_row)?.collect())
 }
 pub fn get(connection: &Connection, id: Uuid) -> AppResult<Bulb> {
-    database(connection.query_row(
+    match connection.query_row(
         "SELECT id,name,ip_address,port,created_at,updated_at FROM bulbs WHERE id=?1",
         [id.to_string()],
         bulb_row,
-    ))
-    .map_err(|_| AppError::NotFound("bulb"))
+    ) {
+        Ok(bulb) => Ok(bulb),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Err(AppError::NotFound("bulb")),
+        Err(_) => Err(AppError::Internal),
+    }
 }
 pub fn save(connection: &mut Connection, bulb: &Bulb, normalized: String) -> AppResult<Bulb> {
     let transaction = connection
@@ -129,4 +132,20 @@ pub fn all_snapshot(connection: &mut Connection) -> AppResult<Vec<Bulb>> {
     let bulbs = list(&transaction)?;
     transaction.commit().map_err(|_| AppError::Internal)?;
     Ok(bulbs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_returns_internal_for_corrupt_persisted_row() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection.execute_batch("CREATE TABLE bulbs(id TEXT PRIMARY KEY,name TEXT,name_normalized TEXT,ip_address TEXT,port INTEGER,created_at TEXT,updated_at TEXT); INSERT INTO bulbs VALUES('00000000-0000-0000-0000-000000000000','Lamp','lamp','192.168.1.2',80,'bad','bad');").unwrap();
+
+        assert!(matches!(
+            get(&connection, Uuid::nil()),
+            Err(AppError::Internal)
+        ));
+    }
 }

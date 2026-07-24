@@ -14,7 +14,7 @@ pub fn migrate(connection: &mut Connection) -> Result<(), String> {
     if version.unwrap_or(0) > 1 {
         return Err("Database version is newer than binary".into());
     }
-    if version.is_none() {
+    if version.unwrap_or(0) < 1 {
         transaction
             .execute_batch(MIGRATION)
             .map_err(|error| error.to_string())?;

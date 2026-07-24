@@ -1,5 +1,5 @@
 use crate::{
-    domain::{profile::LightInput, settings::Settings},
+    domain::{profile::LightInput, settings::SettingsInput},
     error::{AppError, AppResult, validation},
 };
 use std::collections::BTreeMap;
@@ -13,8 +13,11 @@ pub fn name(input: String) -> AppResult<(String, String)> {
 }
 pub type ValidLight = (String, String, u8, String, Option<String>, Option<u16>);
 pub fn light(input: LightInput) -> AppResult<ValidLight> {
-    let (normalized, name) = name(input.name)?;
     let mut fields = BTreeMap::new();
+    let display_name = input.name.trim().to_owned();
+    if display_name.is_empty() || display_name.chars().count() > 80 {
+        fields.insert("name".into(), "Name must contain 1 to 80 characters".into());
+    }
     if !(1..=100).contains(&input.dimmer) {
         fields.insert("dimmer".into(), "Dimmer must be between 1 and 100".into());
     }
@@ -25,26 +28,34 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
             && value[1..].bytes().all(|byte| byte.is_ascii_hexdigit())
     };
     match input.mode.as_str() {
-        "rgb"
-            if rgb.as_deref().is_some_and(valid_rgb)
-                && input.color_temperature_kelvin.0.is_none() => {}
-        "color_temperature"
-            if rgb.is_none()
-                && input
-                    .color_temperature_kelvin
-                    .0
-                    .is_some_and(|value| (3000..=6000).contains(&value)) => {}
         "rgb" => {
-            fields.insert(
-                "rgbColor".into(),
-                "RGB mode requires #RRGGBB and null temperature".into(),
-            );
+            if !rgb.as_deref().is_some_and(valid_rgb) {
+                fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
+            }
+            if input.color_temperature_kelvin.0.is_some() {
+                fields.insert(
+                    "colorTemperatureKelvin".into(),
+                    "RGB mode requires null color temperature".into(),
+                );
+            }
         }
         "color_temperature" => {
-            fields.insert(
-                "colorTemperatureKelvin".into(),
-                "Color temperature mode requires 3000 through 6000 and null RGB".into(),
-            );
+            if rgb.is_some() {
+                fields.insert(
+                    "rgbColor".into(),
+                    "Color temperature mode requires null RGB color".into(),
+                );
+            }
+            if !input
+                .color_temperature_kelvin
+                .0
+                .is_some_and(|value| (3000..=6000).contains(&value))
+            {
+                fields.insert(
+                    "colorTemperatureKelvin".into(),
+                    "Color temperature must be between 3000 and 6000".into(),
+                );
+            }
         }
         _ => {
             fields.insert(
@@ -54,19 +65,26 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
         }
     }
     if fields.is_empty() {
+        let dimmer = u8::try_from(input.dimmer).map_err(|_| AppError::Internal)?;
+        let kelvin = input
+            .color_temperature_kelvin
+            .0
+            .map(u16::try_from)
+            .transpose()
+            .map_err(|_| AppError::Internal)?;
         Ok((
-            normalized,
-            name,
-            input.dimmer,
+            display_name.to_lowercase(),
+            display_name,
+            dimmer,
             input.mode,
             rgb,
-            input.color_temperature_kelvin.0,
+            kelvin,
         ))
     } else {
         Err(AppError::Validation(fields))
     }
 }
-pub fn settings(input: Settings) -> AppResult<(u8, String, Option<String>, Option<u16>)> {
+pub fn settings(input: SettingsInput) -> AppResult<(u8, String, Option<String>, Option<u16>)> {
     let (_, _, dimmer, mode, rgb, kelvin) = light(LightInput {
         name: "settings".into(),
         dimmer: input.dimmer,
@@ -84,4 +102,29 @@ pub fn now() -> String {
 
 pub fn timestamp(value: &str) -> bool {
     OffsetDateTime::parse(value, &Rfc3339).is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::profile::RequiredOption;
+
+    #[test]
+    fn light_reports_name_dimmer_and_mode_errors_together() {
+        let result = light(LightInput {
+            name: " ".into(),
+            dimmer: 256,
+            mode: "invalid".into(),
+            rgb_color: RequiredOption(None),
+            color_temperature_kelvin: RequiredOption(None),
+        });
+
+        let Err(AppError::Validation(fields)) = result else {
+            panic!("expected validation error");
+        };
+        assert_eq!(
+            fields.keys().cloned().collect::<Vec<_>>(),
+            ["dimmer", "mode", "name"]
+        );
+    }
 }

@@ -36,7 +36,7 @@ impl TasmotaClient {
     ) -> Result<serde_json::Value, ResultCode> {
         if self
             .policy
-            .endpoint(&endpoint.ip.to_string(), endpoint.port)
+            .endpoint(&endpoint.ip.to_string(), i64::from(endpoint.port))
             .is_err()
         {
             return Err(ResultCode::DeviceError);

@@ -56,7 +56,7 @@ async fn serve() -> Result<(), String> {
         policy: policy.clone(),
     });
     let profiles = Arc::new(ProfileService { db: db.clone() });
-    let settings = Arc::new(SettingsService { db });
+    let settings = Arc::new(SettingsService { db: db.clone() });
     let tasmota = Arc::new(TasmotaClient {
         policy: policy.clone(),
         client,
@@ -93,28 +93,40 @@ async fn serve() -> Result<(), String> {
         .map_err(|error| format!("bind failed: {error}"))?;
     let shutdown_signal = shutdown_signal()?;
     let (shutdown_started, shutdown_started_rx) = tokio::sync::oneshot::channel();
-    info!(address=%config.bind, "backend ready");
+    info!(
+        version=env!("CARGO_PKG_VERSION"),
+        address=%config.bind,
+        database_initialized=true,
+        migration_version=1,
+        "backend ready"
+    );
     let shutdown = async move {
         let signal = shutdown_signal.await;
         info!(%signal, "shutdown signal received");
         shutting_down.store(true, Ordering::Release);
         let _ = shutdown_started.send(());
     };
-    let server = axum::serve(listener, router(state, config.body_limit))
-        .with_graceful_shutdown(shutdown)
-        .into_future();
-    tokio::pin!(server);
-    tokio::select! {
-        result = &mut server => result.map_err(|error| format!("server failed: {error}")),
-        _ = shutdown_started_rx => match tokio::time::timeout(config.shutdown, &mut server).await {
-            Ok(Ok(())) => Ok(()),
-            Ok(Err(error)) => Err(format!("server failed: {error}")),
-            Err(_) => {
-                error!(grace_ms = config.shutdown.as_millis(), "shutdown grace elapsed");
-                Ok(())
+    let server_result = {
+        let server = axum::serve(listener, router(state, config.body_limit))
+            .with_graceful_shutdown(shutdown)
+            .into_future();
+        tokio::pin!(server);
+        tokio::select! {
+            result = &mut server => result.map_err(|error| format!("server failed: {error}")),
+            _ = shutdown_started_rx => match tokio::time::timeout(config.shutdown, &mut server).await {
+                Ok(Ok(())) => Ok(()),
+                Ok(Err(error)) => Err(format!("server failed: {error}")),
+                Err(_) => {
+                    error!(grace_ms = config.shutdown.as_millis(), "shutdown grace elapsed");
+                    info!(grace_ms = config.shutdown.as_millis(), "remaining server tasks cancelled");
+                    Ok(())
+                }
             }
         }
-    }
+    };
+    db.shutdown().await?;
+    info!(completed = server_result.is_ok(), "shutdown completed");
+    server_result
 }
 
 #[cfg(unix)]

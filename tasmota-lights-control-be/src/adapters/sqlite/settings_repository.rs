@@ -1,18 +1,22 @@
 use crate::{
     adapters::sqlite::bulb_repository::database,
     domain::{
-        profile::RequiredOption, settings::Settings, validation::settings as validate_settings,
+        profile::RequiredOption,
+        settings::{Settings, SettingsInput},
+        validation::settings as validate_settings,
     },
     error::{AppError, AppResult},
 };
 use rusqlite::{Connection, TransactionBehavior, params};
 pub fn get(connection: &Connection) -> AppResult<Settings> {
     let settings = database(connection.query_row("SELECT dimmer,mode,rgb_color,color_temperature_kelvin FROM reset_settings WHERE singleton=1", [], |row| Ok(Settings { dimmer: row.get(0)?, mode: row.get(1)?, rgb_color: RequiredOption(row.get(2)?), color_temperature_kelvin: RequiredOption(row.get(3)?) })))?;
-    validate_settings(Settings {
-        dimmer: settings.dimmer,
+    validate_settings(SettingsInput {
+        dimmer: i64::from(settings.dimmer),
         mode: settings.mode.clone(),
         rgb_color: RequiredOption(settings.rgb_color.0.clone()),
-        color_temperature_kelvin: RequiredOption(settings.color_temperature_kelvin.0),
+        color_temperature_kelvin: RequiredOption(
+            settings.color_temperature_kelvin.0.map(i64::from),
+        ),
     })
     .map_err(|_| AppError::Internal)?;
     Ok(settings)

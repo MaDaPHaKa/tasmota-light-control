@@ -25,7 +25,7 @@ pub fn status(value: &Value) -> DeviceState {
         Some(root) => root,
         None => return state,
     };
-    let status = object(root, "StatusSTS").unwrap_or(root);
+    let status = find_status_object(root).unwrap_or(root);
     state.power = text(status, &["POWER", "POWER1"]).and_then(power);
     state.dimmer = number(status, &["Dimmer"])
         .filter(|value| *value <= 100)
@@ -45,6 +45,38 @@ pub fn status(value: &Value) -> DeviceState {
         state.ct = None;
     }
     state
+}
+
+fn find_status_object(values: &Map<String, Value>) -> Option<&Map<String, Value>> {
+    if has_status_fields(values) {
+        return Some(values);
+    }
+    values.values().find_map(|value| match value {
+        Value::Object(nested) => find_status_object(nested),
+        Value::Array(items) => items
+            .iter()
+            .find_map(|item| item.as_object().and_then(find_status_object)),
+        _ => None,
+    })
+}
+
+fn has_status_fields(values: &Map<String, Value>) -> bool {
+    values.keys().any(|key| {
+        [
+            "StatusSTS",
+            "POWER",
+            "POWER1",
+            "Dimmer",
+            "Color",
+            "CT",
+            "ColorTemperature",
+            "Mode",
+            "ColorMode",
+            "LightMode",
+        ]
+        .iter()
+        .any(|alias| key.eq_ignore_ascii_case(alias))
+    }) && object(values, "StatusSTS").is_none()
 }
 
 fn object<'a>(values: &'a Map<String, Value>, alias: &str) -> Option<&'a Map<String, Value>> {
@@ -92,5 +124,27 @@ fn mode(value: &str) -> Option<String> {
         "rgb" | "color" => Some("rgb".into()),
         "ct" | "color_temperature" | "temperature" => Some("color_temperature".into()),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn status_reads_fields_from_nested_fallback_object() {
+        let state =
+            status(&json!({"wrapper":{"light":{"POWER1":"ON","Dimmer":42,"Color":"ff8000"}}}));
+
+        assert_eq!(
+            (state.power, state.dimmer, state.mode, state.rgb_color),
+            (
+                Some("on".into()),
+                Some(42),
+                Some("rgb".into()),
+                Some("#FF8000".into())
+            )
+        );
     }
 }

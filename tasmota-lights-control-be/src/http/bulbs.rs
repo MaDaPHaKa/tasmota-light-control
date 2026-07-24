@@ -17,22 +17,24 @@ pub async fn create(
     State(state): State<AppState>,
     ApiJson(input): ApiJson<BulbInput>,
 ) -> AppResult<(StatusCode, Json<Bulb>)> {
-    Ok((
-        StatusCode::CREATED,
-        Json(state.bulbs.save(None, input).await?),
-    ))
+    let bulb = state.bulbs.save(None, input).await?;
+    tracing::info!(action="create", resource="bulb", resource_id=%bulb.id, result_code="success", "CRUD completed");
+    Ok((StatusCode::CREATED, Json(bulb)))
 }
 pub async fn replace(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<uuid::Uuid>,
     ApiJson(input): ApiJson<BulbInput>,
 ) -> AppResult<Json<Bulb>> {
-    Ok(Json(state.bulbs.save(Some(id), input).await?))
+    let bulb = state.bulbs.save(Some(id), input).await?;
+    tracing::info!(action="replace", resource="bulb", resource_id=%id, result_code="success", "CRUD completed");
+    Ok(Json(bulb))
 }
 pub async fn delete(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<uuid::Uuid>,
 ) -> AppResult<StatusCode> {
     state.bulbs.delete(id).await?;
+    tracing::info!(action="delete", resource="bulb", resource_id=%id, result_code="success", "CRUD completed");
     Ok(StatusCode::NO_CONTENT)
 }

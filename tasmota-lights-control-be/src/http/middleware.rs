@@ -14,7 +14,9 @@ pub async fn request_id(mut request: Request, next: Next) -> Response {
         .headers()
         .get("x-request-id")
         .and_then(|value| value.to_str().ok())
-        .filter(|value| value.len() <= 128 && value.bytes().all(|byte| byte.is_ascii_graphic()))
+        .filter(|value| {
+            value.len() <= 128 && value.bytes().all(|byte| (b' '..=b'~').contains(&byte))
+        })
         .map(ToOwned::to_owned)
         .unwrap_or_else(|| Uuid::new_v4().to_string());
     request.extensions_mut().insert(RequestId(value.clone()));

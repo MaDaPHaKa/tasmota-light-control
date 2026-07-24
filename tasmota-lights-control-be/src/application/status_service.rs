@@ -73,9 +73,16 @@ impl StatusService {
     }
 
     async fn status_bulb(&self, bulb: Bulb, profiles: Arc<Vec<Profile>>) -> LiveState {
-        let endpoint = match self.client.policy.endpoint(&bulb.ip_address, bulb.port) {
+        let endpoint = match self
+            .client
+            .policy
+            .endpoint(&bulb.ip_address, i64::from(bulb.port))
+        {
             Ok(endpoint) => endpoint,
-            Err(_) => return Self::unavailable(bulb.id, ResultCode::DeviceError),
+            Err(_) => {
+                tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                return Self::unavailable(bulb.id, ResultCode::InvalidResponse);
+            }
         };
         match self.client.status(endpoint).await {
             Ok(state) => LiveState {
@@ -137,13 +144,20 @@ impl StatusService {
     }
 
     pub async fn test(&self, bulb: Bulb) -> TestResult {
-        let status = match self.client.policy.endpoint(&bulb.ip_address, bulb.port) {
+        let status = match self
+            .client
+            .policy
+            .endpoint(&bulb.ip_address, i64::from(bulb.port))
+        {
             Ok(endpoint) => {
                 self.client
                     .invoke(endpoint, crate::ports::bulb_controller::Command::Test)
                     .await
             }
-            Err(_) => ResultCode::DeviceError,
+            Err(_) => {
+                tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                ResultCode::InvalidResponse
+            }
         };
         let compatible = match status {
             ResultCode::Success => Some(true),

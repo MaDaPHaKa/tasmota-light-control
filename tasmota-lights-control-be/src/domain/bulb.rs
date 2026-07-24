@@ -5,13 +5,13 @@ use uuid::Uuid;
 pub struct BulbInput {
     pub name: String,
     pub ip_address: String,
-    pub port: u16,
+    pub port: i64,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BulbEndpointInput {
     pub ip_address: String,
-    pub port: u16,
+    pub port: i64,
 }
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]

@@ -8,3 +8,12 @@ pub struct Settings {
     pub rgb_color: RequiredOption<String>,
     pub color_temperature_kelvin: RequiredOption<u16>,
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SettingsInput {
+    pub dimmer: i64,
+    pub mode: String,
+    pub rgb_color: RequiredOption<String>,
+    pub color_temperature_kelvin: RequiredOption<i64>,
+}

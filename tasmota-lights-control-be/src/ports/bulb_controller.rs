@@ -1,9 +1,6 @@
-use crate::{
-    domain::control::ResultCode,
-    error::{AppResult, validation},
-};
+use crate::{domain::control::ResultCode, error::AppResult};
 use ipnet::IpNet;
-use std::net::Ipv4Addr;
+use std::{collections::BTreeMap, net::Ipv4Addr};
 
 #[derive(Clone)]
 pub struct PolicyState {
@@ -17,23 +14,34 @@ pub struct Endpoint {
 }
 
 impl PolicyState {
-    pub fn endpoint(&self, address: &str, port: u16) -> AppResult<Endpoint> {
-        let ip: Ipv4Addr = address
-            .parse()
-            .map_err(|_| validation("ipAddress", "IPv4 address is required"))?;
-        if port == 0 {
-            return Err(validation("port", "Port must not be zero"));
+    pub fn endpoint(&self, address: &str, port: i64) -> AppResult<Endpoint> {
+        let mut fields = BTreeMap::new();
+        let ip = address.parse::<Ipv4Addr>().ok();
+        if ip.is_none() {
+            fields.insert("ipAddress".into(), "IPv4 address is required".into());
         }
-        if ip.is_unspecified()
-            || ip.is_loopback()
-            || ip.is_multicast()
-            || ip.is_link_local()
-            || ip == Ipv4Addr::BROADCAST
-            || !self.cidrs.iter().any(|network| matches!(network, IpNet::V4(network) if network.contains(&ip) && ip != network.network() && ip != network.broadcast()))
+        let port = u16::try_from(port).ok().filter(|port| *port != 0);
+        if port.is_none() {
+            fields.insert("port".into(), "Port must be between 1 and 65535".into());
+        }
+        if ip.is_some_and(|ip| {
+            ip.is_unspecified()
+                || ip.is_loopback()
+                || ip.is_multicast()
+                || ip.is_link_local()
+                || ip == Ipv4Addr::BROADCAST
+                || !self.cidrs.iter().any(|network| matches!(network, IpNet::V4(network) if network.contains(&ip) && ip != network.network() && ip != network.broadcast()))
+        })
         {
-            return Err(validation("ipAddress", "Address is not an allowed host"));
+            fields.insert("ipAddress".into(), "Address is not an allowed host".into());
         }
-        Ok(Endpoint { ip, port })
+        if !fields.is_empty() {
+            return Err(crate::error::AppError::Validation(fields));
+        }
+        Ok(Endpoint {
+            ip: ip.ok_or(crate::error::AppError::Internal)?,
+            port: port.ok_or(crate::error::AppError::Internal)?,
+        })
     }
 }
 
