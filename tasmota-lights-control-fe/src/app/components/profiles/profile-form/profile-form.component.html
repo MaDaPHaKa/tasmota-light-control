@@ -3,9 +3,7 @@
     <mat-form-field appearance="outline"
       ><mat-label>Name</mat-label
       ><input #formControl matInput [formField]="profileForm.name" (input)="changed('name')" />
-      @if (serverError('name')) {
-        <mat-error>{{ serverError('name') }}</mat-error>
-      } @else if (showClientError('name')) {
+      @if (showClientError('name')) {
         <mat-error>{{ clientError('name') }}</mat-error>
       }
     </mat-form-field>
@@ -18,9 +16,7 @@
         [formField]="profileForm.dimmer"
         (input)="changed('dimmer')"
       />
-      @if (serverError('dimmer')) {
-        <mat-error>{{ serverError('dimmer') }}</mat-error>
-      } @else if (showClientError('dimmer')) {
+      @if (showClientError('dimmer')) {
         <mat-error>{{ clientError('dimmer') }}</mat-error>
       }
     </mat-form-field>
@@ -32,8 +28,8 @@
         >Color temperature</mat-radio-button
       ></mat-radio-group
     >
-    @if (serverError('mode')) {
-      <p class="field-error">{{ serverError('mode') }}</p>
+    @if (showClientError('mode')) {
+      <p class="field-error">{{ clientError('mode') }}</p>
     }
   </fieldset>
   @if (model().mode === 'rgb') {
@@ -43,9 +39,7 @@
       [disabled]="pending()"
       [hideSwatch]="true"
     />
-    @if (serverError('rgbColor')) {
-      <p class="field-error">{{ serverError('rgbColor') }}</p>
-    } @else if (showClientError('rgbColor')) {
+    @if (showClientError('rgbColor')) {
       <p class="field-error">{{ clientError('rgbColor') }}</p>
     }
   } @else {
@@ -58,9 +52,7 @@
         [formField]="profileForm.colorTemperatureKelvin"
         (input)="changed('colorTemperatureKelvin')"
       />
-      @if (serverError('colorTemperatureKelvin')) {
-        <mat-error>{{ serverError('colorTemperatureKelvin') }}</mat-error>
-      } @else if (showClientError('colorTemperatureKelvin')) {
+      @if (showClientError('colorTemperatureKelvin')) {
         <mat-error>{{ clientError('colorTemperatureKelvin') }}</mat-error>
       }
     </mat-form-field>

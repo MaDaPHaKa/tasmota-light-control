@@ -61,15 +61,18 @@ export class ProfileFormComponent {
   readonly profileForm = form(this.model, (p) => {
     required(p.name, { message: 'Name is required' });
     required(p.dimmer, { message: 'Dimmer is required' });
-    validate(p.name, ({ value }) => validateTrimmedRequired(value(), 80));
-    validate(p.dimmer, ({ value }) => validateIntegerRange(value(), 1, 100));
+    validate(p.name, ({ value }) => this.serverValidation('name') ?? validateTrimmedRequired(value(), 80));
+    validate(p.dimmer, ({ value }) => this.serverValidation('dimmer') ?? validateIntegerRange(value(), 1, 100));
+    validate(p.mode, () => this.serverValidation('mode'));
     validate(p.rgbColor, ({ value }) =>
-      this.model().mode === 'rgb' ? validateUppercaseRgbHex(value()) : undefined,
+      this.serverValidation('rgbColor') ??
+        (this.model().mode === 'rgb' ? validateUppercaseRgbHex(value()) : undefined),
     );
     validate(p.colorTemperatureKelvin, ({ value }) =>
-      this.model().mode === 'color_temperature'
-        ? validateIntegerRange(value(), 3000, 6000)
-        : undefined,
+      this.serverValidation('colorTemperatureKelvin') ??
+        (this.model().mode === 'color_temperature'
+          ? validateIntegerRange(value(), 3000, 6000)
+          : undefined),
     );
   });
   constructor() {
@@ -128,15 +131,17 @@ export class ProfileFormComponent {
   protected changed(field: ProfileField) {
     this.fieldChanged.emit(field);
   }
-  protected serverError(field: ProfileField) {
-    return this.failure()?.fields[field] ?? null;
-  }
   protected clientError(field: ProfileField) {
     return this.profileForm[field]().errors()[0]?.message ?? null;
   }
   protected showClientError(field: ProfileField) {
     const state = this.profileForm[field]();
-    return state.touched() && state.invalid();
+    return state.invalid() && (state.touched() || !!this.serverValidation(field));
+  }
+  private serverValidation(field: ProfileField) {
+    const fields = this.failure()?.fields ?? {};
+    const message = fields[field] ?? fields[field === 'rgbColor' ? 'rgb_color' : field];
+    return message ? { kind: 'server', message } : undefined;
   }
   private focusFirstInvalid() {
     const control = this.controls().find(
