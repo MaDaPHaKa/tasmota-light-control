@@ -39,10 +39,8 @@
           [value]="model().rgbColor"
           (valueChange)="updateRgbColor($event)"
           [disabled]="pending()"
+          [errorMessage]="showClientError('rgbColor') ? clientError('rgbColor') : null"
         />
-        @if (showClientError('rgbColor')) {
-          <p class="field-error">{{ clientError('rgbColor') }}</p>
-        }
       } @else {
         <mat-form-field appearance="outline"
           ><mat-label>Color temperature (Kelvin)</mat-label
@@ -65,7 +63,7 @@
         [text]="model().mode === 'rgb' ? model().rgbColor : model().colorTemperatureKelvin + ' K'"
         [dimmer]="model().dimmer"
       />
-      <button mat-flat-button color="primary" type="submit" [disabled]="pending()">
+      <button mat-flat-button color="primary" type="submit" [disabled]="pending() || settingsForm().invalid()">
         {{ pending() ? 'Saving…' : 'Save      settings' }}
       </button>
     </div>

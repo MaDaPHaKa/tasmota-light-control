@@ -22,6 +22,7 @@ export class RgbColorPickerComponent {
   readonly value = model.required<string>();
   readonly disabled = input(false);
   readonly hideSwatch = input(false);
+  readonly errorMessage = input<string | null>(null);
   private readonly hexInput = viewChild.required<ElementRef<HTMLInputElement>>('hexInput');
 
   focus(): void {

@@ -16,6 +16,9 @@
       (input)="updateFromText($any($event.target).value)"
       aria-describedby="rgb-format"
     />
+    @if (errorMessage(); as message) {
+      <mat-error>{{ message }}</mat-error>
+    }
     <mat-hint id="rgb-format">Uppercase #RRGGBB</mat-hint>
   </mat-form-field>
   @if (!hideSwatch()) {

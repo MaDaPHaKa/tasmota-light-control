@@ -38,10 +38,8 @@
       (valueChange)="updateRgbColor($event)"
       [disabled]="pending()"
       [hideSwatch]="true"
+      [errorMessage]="showClientError('rgbColor') ? clientError('rgbColor') : null"
     />
-    @if (showClientError('rgbColor')) {
-      <p class="field-error">{{ clientError('rgbColor') }}</p>
-    }
   } @else {
     <mat-form-field appearance="outline"
       ><mat-label>Kelvin</mat-label
@@ -64,7 +62,7 @@
   />
   <div class="actions">
     <button mat-button type="button" (click)="cancel.emit()">Cancel</button
-    ><button mat-flat-button color="primary" type="submit" [disabled]="pending()">
+    ><button mat-flat-button color="primary" type="submit" [disabled]="pending() || profileForm().invalid()">
       {{ pending() ? 'Saving…' : 'Save profile' }}
     </button>
   </div>

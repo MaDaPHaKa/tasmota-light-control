@@ -41,7 +41,7 @@
       (click)="test()"
     >
       {{ testPending() ? 'Testing…' : 'Test endpoint' }}</button
-    ><button mat-flat-button color="primary" type="submit" [disabled]="pending()">
+    ><button mat-flat-button color="primary" type="submit" [disabled]="pending() || bulbForm().invalid()">
       {{ pending() ? 'Saving…' : 'Save bulb' }}
     </button>
   </div>
