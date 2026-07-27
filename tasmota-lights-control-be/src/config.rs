@@ -23,6 +23,7 @@ struct FileConfig {
     request_body_limit_bytes: Option<usize>,
     tasmota_body_limit_bytes: Option<usize>,
     shutdown_grace_ms: Option<u64>,
+    log_level: Option<String>,
 }
 
 #[derive(Clone)]
@@ -37,23 +38,33 @@ pub struct Config {
     pub response_limit: usize,
     pub shutdown: Duration,
     pub busy_timeout: u64,
+    pub log_level: String,
 }
 
 impl Config {
     pub fn load(path: Option<PathBuf>) -> Result<Self, String> {
         let file = match path {
-            Some(path) => {
-                if !path.is_absolute() {
-                    return Err("Config path must be absolute".into());
-                }
-                toml::from_str(
-                    &std::fs::read_to_string(path).map_err(|_| "Cannot read config file")?,
-                )
-                .map_err(|_| "Invalid config file")?
-            }
-            None => FileConfig::default(),
+            Some(path) => load_file_config(path, true)?,
+            None => match default_config_path() {
+                Ok(path) if path.is_file() => load_file_config(path, false)?,
+                Ok(_) | Err(_) => FileConfig::default(),
+            },
         };
         let get = |key: &str, value: Option<String>| std::env::var(key).ok().or(value);
+        let log_level = get("TLC_LOG_LEVEL", file.log_level).unwrap_or_else(|| {
+            if cfg!(debug_assertions) {
+                "info"
+            } else {
+                "error"
+            }
+            .into()
+        });
+        if !matches!(
+            log_level.as_str(),
+            "error" | "warn" | "info" | "debug" | "trace"
+        ) {
+            return Err("Invalid TLC_LOG_LEVEL".into());
+        }
         let bind = get("TLC_BIND_ADDRESS", file.bind_address)
             .unwrap_or_else(|| "127.0.0.1:8080".into())
             .parse()
@@ -156,14 +167,31 @@ impl Config {
                 100,
                 30000,
             )?,
+            log_level,
         })
     }
+}
+
+fn load_file_config(path: PathBuf, require_absolute: bool) -> Result<FileConfig, String> {
+    if require_absolute && !path.is_absolute() {
+        return Err("Config path must be absolute".into());
+    }
+    toml::from_str(&std::fs::read_to_string(path).map_err(|_| "Cannot read config file")?)
+        .map_err(|_| "Invalid config file".into())
 }
 
 fn default_database_path() -> Result<PathBuf, String> {
     std::env::var_os("HOME")
         .map(PathBuf::from)
         .filter(|home| home.is_absolute())
-        .map(|home| home.join("tasmota-lights-control/data/app.sqlite3"))
+        .map(|home| home.join(".config/tasmota-lights-control/data/app.sqlite3"))
         .ok_or_else(|| "Cannot determine absolute default database path".into())
+}
+
+fn default_config_path() -> Result<PathBuf, String> {
+    std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .filter(|home| home.is_absolute())
+        .map(|home| home.join(".config/tasmota-lights-control/config/config.toml"))
+        .ok_or_else(|| "Cannot determine absolute default config path".into())
 }

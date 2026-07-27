@@ -34,15 +34,18 @@ impl TasmotaClient {
         endpoint: Endpoint,
         command: Command,
     ) -> Result<serde_json::Value, ResultCode> {
+        let command_text = command.text();
+        let endpoint_ip = endpoint.ip;
+        let endpoint_port = endpoint.port;
         if self
             .policy
-            .endpoint(&endpoint.ip.to_string(), i64::from(endpoint.port))
+            .endpoint(&endpoint_ip.to_string(), i64::from(endpoint_port))
             .is_err()
         {
             return Err(ResultCode::DeviceError);
         }
         let url = endpoint_url(&endpoint, &command).map_err(|_| ResultCode::InvalidResponse)?;
-        timeout(self.timeout, async {
+        let result = timeout(self.timeout, async {
             let _permit = self
                 .outbound
                 .clone()
@@ -81,7 +84,16 @@ impl TasmotaClient {
             Ok(value)
         })
         .await
-        .map_err(|_| ResultCode::Timeout)?
+        .map_err(|_| ResultCode::Timeout);
+        if let Err(status) = &result {
+            tracing::error!(
+                endpoint = %format!("{endpoint_ip}:{endpoint_port}"),
+                command = %command_text,
+                status = ?status,
+                "tasmota request failed"
+            );
+        }
+        result?
     }
 }
 

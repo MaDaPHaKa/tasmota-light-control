@@ -96,7 +96,14 @@ impl StatusService {
                 applied_profile_id: Self::profile(&state, &profiles),
                 checked_at: now(),
             },
-            Err(status) => Self::unavailable(bulb.id, status),
+            Err(status) => {
+                tracing::error!(
+                    bulb_id = %bulb.id,
+                    status = ?status,
+                    "tasmota status check failed"
+                );
+                Self::unavailable(bulb.id, status)
+            }
         }
     }
 

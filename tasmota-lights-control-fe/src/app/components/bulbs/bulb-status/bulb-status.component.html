@@ -1,34 +1,43 @@
-@switch(state().kind){@case('loading'){
-<span class="loading" role="status">Checking…</span>}
-@case('loaded'){@if(loaded();as status){
-<dl class="status">
-    <div>
-        <dt>Reachability</dt>
-        <dd>{{status.reachability}}</dd>
-    </div>
-    <div>
-        <dt>Power</dt>
-        <dd>{{status.power??'unknown'}}</dd>
-    </div>
-    <div>
-        <dt>Dimmer</dt>
-        <dd>{{status.dimmer===null?'Unknown':status.dimmer+'%'}}</dd>
-    </div>
-    <div>
-        <dt>Mode/value</dt>
-        <dd>{{status.mode??'Unknown'}} · {{value()}}</dd>
-    </div>
-    <div>
-        <dt>Profile</dt>
-        <dd>{{profileName()}}</dd>
-    </div>
-    <div>
-        <dt>Checked</dt>
-        <dd><time [attr.datetime]="status.checkedAt">{{status.checkedAt|date:'medium'}}</time></dd>
-    </div>
-</dl>
-}}@case('error'){
-<span class="error" role="alert">{{error()}}</span>}@default{<span class="idle">Not
-    checked</span>
-}
+@switch (state().kind) {
+  @case ('loading') {
+    <span class="loading" role="status">Checking…</span>
+  }
+  @case ('loaded') {
+    @if (loaded(); as status) {
+      <dl class="status">
+        <div>
+          <dt>Reachability</dt>
+          <dd>{{ status.reachability }}</dd>
+        </div>
+        <div>
+          <dt>Power</dt>
+          <dd>{{ status.power ?? 'unknown' }}</dd>
+        </div>
+        <div>
+          <dt>Dimmer</dt>
+          <dd>{{ status.dimmer === null ? 'Unknown' : status.dimmer + '%' }}</dd>
+        </div>
+        <div>
+          <dt>Mode/value</dt>
+          <dd>{{ status.mode ?? 'Unknown' }} · {{ value() }}</dd>
+        </div>
+        <div>
+          <dt>Profile</dt>
+          <dd>{{ profileName() }}</dd>
+        </div>
+        <div>
+          <dt>Checked</dt>
+          <dd>
+            <time [attr.datetime]="status.checkedAt">{{ status.checkedAt | date: 'medium' }}</time>
+          </dd>
+        </div>
+      </dl>
+    }
+  }
+  @case ('error') {
+    <span class="error" role="alert">{{ error() }}</span>
+  }
+  @default {
+    <span class="idle">Not checked</span>
+  }
 }

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,10 +32,11 @@ export class AppComponent {
   protected readonly bulbs = this.store.bulbs;
   protected readonly startupError = this.store.startupError;
   protected readonly routePath = signal(this.router.url);
-  protected readonly routeTitle = computed(() =>
-    ({ bulbs: 'Bulbs', profiles: 'Profiles', control: 'Control', settings: 'Settings' })[
-      this.routePath().split('/')[1]
-    ] ?? 'Not found',
+  protected readonly routeTitle = computed(
+    () =>
+      ({ bulbs: 'Bulbs', profiles: 'Profiles', control: 'Control', settings: 'Settings' })[
+        this.routePath().split('/')[1]
+      ] ?? 'Not found',
   );
 
   constructor() {

@@ -15,7 +15,12 @@
     "module": "preserve",
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
-    "paths": {"@components/*":["src/app/components/*"],"@services/*":["src/app/services/*"],"@model/*":["src/app/model/*"],"@functions/*":["src/app/functions/*"]}
+    "paths": {
+      "@components/*": ["src/app/components/*"],
+      "@services/*": ["src/app/services/*"],
+      "@model/*": ["src/app/model/*"],
+      "@functions/*": ["src/app/functions/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

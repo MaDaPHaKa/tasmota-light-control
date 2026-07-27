@@ -1,3 +1,46 @@
-<section class="page-heading"><div><div class="eyebrow">WORKSPACE / DEVICES</div><h1>Bulbs</h1><p>Manage connected Tasmota lights and monitor live status.</p></div><button mat-flat-button color="primary" (click)="toggleForm()"><mat-icon>add</mat-icon>{{showForm()?'Close':'Add bulb'}}</button></section>
-@if(showForm()){<section class="quick-form"><h2>{{editing()?'Edit bulb':'Register bulb'}}</h2><app-bulb-form [editing]="editing()" [pending]="pending()" [testPending]="testPending()" [failure]="failure()" [lastTestResult]="lastTestResult()" (save)="save($event)" (testEndpoint)="testEndpoint($event)" (fieldChanged)="clearField($event)" (endpointChanged)="clearTest()" (cancel)="showForm.set(false)"/></section>}
-<section class="device-section"><div class="section-header"><div><h2>All bulbs</h2><span class="muted">{{bulbs().length}} registered devices</span></div></div><app-bulb-list [bulbs]="bulbs()" [profiles]="profiles()" [statuses]="statuses()" [pendingActionIds]="pendingActionIds()" (edit)="edit($event)" (delete)="remove($event)" (test)="test($event)" (refreshStatus)="refresh($event)" (reset)="reset($event)"/></section>
+<app-page-header
+  sectionEyebrow="DEVICES"
+  sectionName="Bulbs"
+  sectionDescription="Manage connected Tasmota lights and monitor live status."
+>
+  <button externalActions mat-flat-button color="primary" (click)="toggleForm()">
+    <mat-icon>add</mat-icon>{{ showForm() ? 'Close' : 'Add bulb' }}
+  </button>
+</app-page-header>
+@if (showForm()) {
+  <section class="quick-form">
+    <h2>{{ editing() ? 'Edit bulb' : 'Register bulb' }}</h2>
+    <app-bulb-form
+      [editing]="editing()"
+      [pending]="pending()"
+      [testPending]="testPending()"
+      [failure]="failure()"
+      [lastTestResult]="lastTestResult()"
+      (save)="save($event)"
+      (testEndpoint)="testEndpoint($event)"
+      (fieldChanged)="clearField($event)"
+      (endpointChanged)="clearTest()"
+      (cancel)="showForm.set(false)"
+    />
+  </section>
+} @else {
+  <section class="device-section">
+    <div class="section-header">
+      <div>
+        <h2>All bulbs</h2>
+        <span class="muted">{{ bulbs().length }} registered devices</span>
+      </div>
+    </div>
+    <app-bulb-list
+      [bulbs]="bulbs()"
+      [profiles]="profiles()"
+      [statuses]="statuses()"
+      [pendingActionIds]="pendingActionIds()"
+      (edit)="edit($event)"
+      (delete)="remove($event)"
+      (test)="test($event)"
+      (refreshStatus)="refresh($event)"
+      (reset)="reset($event)"
+    />
+  </section>
+}

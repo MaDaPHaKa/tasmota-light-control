@@ -1,3 +1,25 @@
-import { Injectable, inject } from '@angular/core'; import { HttpClient } from '@angular/common/http'; import { LightProfile, LightProfileInput } from '@model/profile.model'; import { Uuid } from '@model/bulb.model';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { LightProfile, LightProfileInput } from '@model/profile.model';
+import { Uuid } from '@model/bulb.model';
 import { environment } from '../../environments/environment';
-@Injectable({providedIn:'root'}) export class ProfilesApiService { private readonly http=inject(HttpClient); private readonly base=`${environment.baseUrl}/api/v1/profiles`; list(){return this.http.get<LightProfile[]>(this.base)} get(id:Uuid){return this.http.get<LightProfile>(`${this.base}/${id}`)} create(input:LightProfileInput){return this.http.post<LightProfile>(this.base,input)} replace(id:Uuid,input:LightProfileInput){return this.http.put<LightProfile>(`${this.base}/${id}`,input)} delete(id:Uuid){return this.http.delete<void>(`${this.base}/${id}`)} }
+@Injectable({ providedIn: 'root' })
+export class ProfilesApiService {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.baseUrl}/api/v1/profiles`;
+  list() {
+    return this.http.get<LightProfile[]>(this.base);
+  }
+  get(id: Uuid) {
+    return this.http.get<LightProfile>(`${this.base}/${id}`);
+  }
+  create(input: LightProfileInput) {
+    return this.http.post<LightProfile>(this.base, input);
+  }
+  replace(id: Uuid, input: LightProfileInput) {
+    return this.http.put<LightProfile>(`${this.base}/${id}`, input);
+  }
+  delete(id: Uuid) {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+}

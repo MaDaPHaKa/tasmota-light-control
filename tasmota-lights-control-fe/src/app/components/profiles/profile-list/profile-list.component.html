@@ -1,15 +1,17 @@
 <div class="list">
   @for (profile of profiles(); track profile.id) {
     <article>
-      <div>
+      <div class="profile-info">
         <strong>{{ profile.name }}</strong
         ><span
           >{{ profile.mode === 'rgb' ? profile.rgbColor : profile.colorTemperatureKelvin + ' K' }} ·
           {{ profile.dimmer }}%</span
         >
       </div>
-      <button mat-button (click)="edit.emit(profile)">Edit</button
-      ><button mat-button color="warn" (click)="delete.emit(profile)">Delete</button>
+      <div class="profile-actions">
+        <button mat-button (click)="edit.emit(profile)">Edit</button
+        ><button mat-button color="warn" (click)="delete.emit(profile)">Delete</button>
+      </div>
     </article>
   }
 </div>

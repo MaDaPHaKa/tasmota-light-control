@@ -1,0 +1,8 @@
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">WORKSPACE / {{ sectionEyebrow().toUpperCase() }}</div>
+    <h1>{{ sectionName() }}</h1>
+    <p>{{ sectionDescription() }}</p>
+  </div>
+  <ng-content select="[externalActions]"></ng-content>
+</section>

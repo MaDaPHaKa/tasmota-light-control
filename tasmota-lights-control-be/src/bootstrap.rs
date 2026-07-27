@@ -23,19 +23,26 @@ use std::{
 use tokio::sync::Semaphore;
 use tracing::{error, info};
 pub async fn run() {
+    let config = match Config::load(Arguments::parse().config) {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("backend failed: {error}");
+            std::process::exit(1);
+        }
+    };
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| config.log_level.parse().expect("validated log level")),
         )
         .init();
-    if let Err(error) = serve().await {
+    if let Err(error) = serve(config).await {
         error!(%error, "backend failed");
         std::process::exit(1);
     }
 }
 
-async fn serve() -> Result<(), String> {
-    let config = Config::load(Arguments::parse().config)?;
+async fn serve(config: Config) -> Result<(), String> {
     if let Some(parent) = config.database.parent() {
         std::fs::create_dir_all(parent)
             .map_err(|error| format!("database directory failed: {error}"))?;

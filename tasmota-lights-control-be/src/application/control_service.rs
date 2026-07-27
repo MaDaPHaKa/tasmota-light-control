@@ -71,6 +71,13 @@ impl ControlService {
                     duration_ms=target_started.elapsed().as_millis(),
                     "target call completed"
                 );
+                if !matches!(status, ResultCode::Success) {
+                    tracing::error!(
+                        bulb_id = %bulb.id,
+                        result_code = ?status,
+                        "tasmota control call failed"
+                    );
+                }
                 (
                     index,
                     TargetResult {
@@ -103,15 +110,27 @@ impl ControlService {
             },
             results,
         };
-        tracing::info!(
-            operation,
-            profile_id=?profile_id,
-            target_count=result.summary.total,
-            succeeded=result.summary.succeeded,
-            failed=result.summary.failed,
-            duration_ms=operation_started.elapsed().as_millis(),
-            "control operation completed"
-        );
+        if result.summary.failed > 0 {
+            tracing::error!(
+                operation,
+                profile_id=?profile_id,
+                target_count=result.summary.total,
+                succeeded=result.summary.succeeded,
+                failed=result.summary.failed,
+                duration_ms=operation_started.elapsed().as_millis(),
+                "control operation completed with failures"
+            );
+        } else {
+            tracing::info!(
+                operation,
+                profile_id=?profile_id,
+                target_count=result.summary.total,
+                succeeded=result.summary.succeeded,
+                failed=result.summary.failed,
+                duration_ms=operation_started.elapsed().as_millis(),
+                "control operation completed"
+            );
+        }
         result
     }
 

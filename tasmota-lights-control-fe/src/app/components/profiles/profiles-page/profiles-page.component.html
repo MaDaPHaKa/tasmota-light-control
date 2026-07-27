@@ -1,19 +1,28 @@
-<section class="page-heading">
-  <div>
-    <div class="eyebrow">WORKSPACE / CONFIGURATION</div>
-    <h1>Profiles</h1>
-    <p>Reusable light settings for quick, consistent control.</p>
+<app-page-header
+  sectionEyebrow="CONFIGURATION"
+  sectionName="Profiles"
+  sectionDescription="Reusable light settings for quick, consistent control."
+>
+  <div class="actions-row" externalActions>
+    <button mat-flat-button color="primary" (click)="toggleForm()">
+      <mat-icon>add</mat-icon>New profile
+    </button>
   </div>
-  <button mat-flat-button color="primary" (click)="toggleForm()">
-    <mat-icon>add</mat-icon>New profile
-  </button>
-</section>
+</app-page-header>
 @if (showForm()) {
   <section class="editor">
     <h2>{{ editing() ? 'Edit profile' : 'New profile' }}</h2>
-    <app-profile-form [editing]="editing()" [pending]="pending()" [failure]="failure()" (fieldChanged)="clearField($event)" (save)="save($event)" (cancel)="showForm.set(false)" />
+    <app-profile-form
+      [editing]="editing()"
+      [pending]="pending()"
+      [failure]="failure()"
+      (fieldChanged)="clearField($event)"
+      (save)="save($event)"
+      (cancel)="showForm.set(false)"
+    />
   </section>
-}
+} @else {
 <section class="profile-grid">
   <app-profile-list [profiles]="profiles()" (edit)="edit($event)" (delete)="remove($event)" />
 </section>
+}

@@ -79,22 +79,39 @@ impl Db {
     ) -> AppResult<T> {
         let (tx, rx) = oneshot::channel();
         if !self.readiness.load(Ordering::Acquire) {
+            tracing::error!("database unavailable before operation dispatch");
             return Err(AppError::Unavailable);
         }
         let sender = self
             .sender
             .lock()
-            .map_err(|_| AppError::Unavailable)?
+            .map_err(|_| {
+                tracing::error!("database sender lock failed");
+                AppError::Unavailable
+            })?
             .clone()
-            .ok_or(AppError::Unavailable)?;
+            .ok_or_else(|| {
+                tracing::error!("database worker sender unavailable");
+                AppError::Unavailable
+            })?;
         sender
             .try_send(DbJob {
                 run: Box::new(move |connection| {
                     let _ = tx.send(action(connection));
                 }),
             })
-            .map_err(|_| AppError::Unavailable)?;
-        rx.await.map_err(|_| AppError::Unavailable)?
+            .map_err(|_| {
+                tracing::error!("database operation queue unavailable");
+                AppError::Unavailable
+            })?;
+        let result = rx.await.map_err(|_| {
+            tracing::error!("database worker dropped operation result");
+            AppError::Unavailable
+        })?;
+        if let Err(error @ (AppError::Internal | AppError::Unavailable)) = &result {
+            tracing::error!(error = ?error, "database operation failed");
+        }
+        result
     }
 
     pub fn is_available(&self) -> bool {

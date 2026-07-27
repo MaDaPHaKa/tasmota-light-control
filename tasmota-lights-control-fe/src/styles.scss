@@ -73,6 +73,15 @@ select:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
-.snackbar-success { --mat-snack-bar-container-color: #3d5943; --mat-snack-bar-supporting-text-color: #e4f0dc; }
-.snackbar-info { --mat-snack-bar-container-color: #365563; --mat-snack-bar-supporting-text-color: #e0f2f5; }
-.snackbar-error { --mat-snack-bar-container-color: #633b42; --mat-snack-bar-supporting-text-color: #ffe2e5; }
+.snackbar-success {
+  --mat-snack-bar-container-color: #3d5943;
+  --mat-snack-bar-supporting-text-color: #e4f0dc;
+}
+.snackbar-info {
+  --mat-snack-bar-container-color: #365563;
+  --mat-snack-bar-supporting-text-color: #e0f2f5;
+}
+.snackbar-error {
+  --mat-snack-bar-container-color: #633b42;
+  --mat-snack-bar-supporting-text-color: #ffe2e5;
+}

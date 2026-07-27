@@ -1,2 +1,16 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core'; import { MatButtonModule } from '@angular/material/button'; import { LightProfile } from '@model/profile.model';
-@Component({selector:'app-profile-list',standalone:true,imports:[MatButtonModule],templateUrl:'./profile-list.component.html',styleUrl:'./profile-list.component.scss',changeDetection:ChangeDetectionStrategy.OnPush}) export class ProfileListComponent {readonly profiles=input<readonly LightProfile[]>([]);readonly edit=output<LightProfile>();readonly delete=output<LightProfile>();}
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { LightProfile } from '@model/profile.model';
+@Component({
+  selector: 'app-profile-list',
+  standalone: true,
+  imports: [MatButtonModule],
+  templateUrl: './profile-list.component.html',
+  styleUrl: './profile-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileListComponent {
+  readonly profiles = input<readonly LightProfile[]>([]);
+  readonly edit = output<LightProfile>();
+  readonly delete = output<LightProfile>();
+}

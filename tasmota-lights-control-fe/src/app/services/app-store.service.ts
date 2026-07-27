@@ -2,15 +2,18 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of, tap } from 'rxjs';
 import { Bulb, LiveBulbState, Uuid } from '@model/bulb.model';
+import { ApiFailure } from '@model/api-error.model';
 import { LightProfile } from '@model/profile.model';
 import { BulbStatusViewState, LoadState } from '@model/view-state.model';
 import { BulbsApiService } from '@services/bulbs-api.service';
 import { ProfilesApiService } from '@services/profiles-api.service';
+import { SnackbarService } from '@services/snackbar.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppStoreService {
   private readonly bulbsApi = inject(BulbsApiService);
   private readonly profilesApi = inject(ProfilesApiService);
+  private readonly snackbar = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
   private initialized = false;
   readonly bulbs = signal<readonly Bulb[]>([]);
@@ -28,18 +31,18 @@ export class AppStoreService {
       bulbs: this.bulbsApi.list().pipe(
         tap((v) => this.bulbs.set(this.sorted(v))),
         tap(() => this.bulbsLoadState.set('loaded')),
-        catchError(() => {
+        catchError((failure: ApiFailure) => {
           this.bulbsLoadState.set('error');
-          this.startupError.set('Could not load bulbs.');
+          this.startupError.set(failure.message || 'Could not load bulbs.');
           return of([] as Bulb[]);
         }),
       ),
       profiles: this.profilesApi.list().pipe(
         tap((v) => this.profiles.set(this.sorted(v))),
         tap(() => this.profilesLoadState.set('loaded')),
-        catchError(() => {
+        catchError((failure: ApiFailure) => {
           this.profilesLoadState.set('error');
-          this.startupError.set('Could not load profiles.');
+          this.startupError.set(failure.message || 'Could not load profiles.');
           return of([] as LightProfile[]);
         }),
       ),
@@ -82,7 +85,10 @@ export class AppStoreService {
             .filter((b) => !returned.has(b.id))
             .forEach((b) => this.setStatusError(b.id));
         },
-        error: () => this.bulbs().forEach((b) => this.setStatusError(b.id)),
+        error: (failure: ApiFailure) => {
+          this.bulbs().forEach((b) => this.setStatusError(b.id));
+          this.snackbar.failure(failure, 'Could not load bulb statuses.');
+        },
       });
   }
   refreshStatus(id: Uuid) {
@@ -90,7 +96,13 @@ export class AppStoreService {
     this.bulbsApi
       .getStatus(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (s) => this.setStatus(s), error: () => this.setStatusError(id) });
+      .subscribe({
+        next: (s) => this.setStatus(s),
+        error: (failure: ApiFailure) => {
+          this.setStatusError(id);
+          this.snackbar.failure(failure, 'Could not load bulb status.');
+        },
+      });
   }
   private setStatus(s: LiveBulbState) {
     this.statusByBulbId.update((m) => new Map(m).set(s.bulbId, { kind: 'loaded', value: s }));

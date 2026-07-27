@@ -65,10 +65,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss",
-              "public/material-icons.scss"
-            ]
+            "styles": ["src/styles.scss", "public/material-icons.scss"]
           },
           "configurations": {
             "production": {

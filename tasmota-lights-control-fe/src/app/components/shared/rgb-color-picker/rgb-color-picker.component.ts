@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, model, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  input,
+  model,
+  viewChild,
+} from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ColorPicker } from '@acrodata/color-picker';
@@ -14,6 +21,8 @@ import { ColorPicker } from '@acrodata/color-picker';
 export class RgbColorPickerComponent {
   readonly value = model.required<string>();
   readonly disabled = input(false);
+  readonly hideSwatch = input(false);
+  readonly errorMessage = input<string | null>(null);
   private readonly hexInput = viewChild.required<ElementRef<HTMLInputElement>>('hexInput');
 
   focus(): void {

@@ -1,0 +1,17 @@
+# Tasmota Lights Control default configuration.
+# Environment variables TLC_* override values in this file.
+
+bind_address = "127.0.0.1:8080"
+allowed_cidrs = ["192.168.178.0/24"]
+bulb_timeout_ms = 3000
+fanout_concurrency = 8
+max_control_operations = 4
+database_busy_timeout_ms = 5000
+request_body_limit_bytes = 16384
+tasmota_body_limit_bytes = 65536
+shutdown_grace_ms = 10000
+log_level = "info"
+
+# Optional. If omitted, backend uses:
+# ~/.config/tasmota-lights-control/data/app.sqlite3
+# database_path = "/absolute/path/to/app.sqlite3"
