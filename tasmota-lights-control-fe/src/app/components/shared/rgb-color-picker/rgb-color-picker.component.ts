@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, model, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  input,
+  model,
+  viewChild,
+} from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ColorPicker } from '@acrodata/color-picker';

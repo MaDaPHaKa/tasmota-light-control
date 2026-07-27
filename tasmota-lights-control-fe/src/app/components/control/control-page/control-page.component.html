@@ -1,37 +1,63 @@
-<section class="page-heading">
-    <div>
-        <div class="eyebrow">WORKSPACE / ACTIONS</div>
-        <h1>Control</h1>
-        <p>Apply profiles or restore defaults across your bulbs.</p>
-    </div>
-</section>
+<app-page-header
+  sectionEyebrow="ACTIONS"
+  sectionName="Control"
+  sectionDescription="Apply profiles or restore defaults across your bulbs."
+/>
 <div class="control-layout">
-    <section class="panel">
-        <h2>Apply profile</h2>
-        <mat-form-field appearance="outline">
-            <mat-label>Profile</mat-label>
-            <mat-select [value]="selectedProfile()" (selectionChange)="chooseProfile($event.value)">@for(profile of
-                profiles();track profile.id){<mat-option [value]="profile.id">{{profile.name}}</mat-option>}
-            </mat-select>
-        </mat-form-field>
-        <fieldset>
-            <legend>Bulbs</legend>
-            <div class="selection-actions"><button mat-button type="button" (click)="selectAll()">Select
-                    all</button><button mat-button type="button" (click)="clearAll()">Clear all</button></div>@for(bulb
-            of bulbs();track bulb.id){<mat-checkbox [checked]="selectedBulbs().has(bulb.id)"
-                (change)="toggleBulb(bulb.id)">{{bulb.name}} <span>{{bulb.ipAddress}}</span></mat-checkbox>}
-        </fieldset><button mat-flat-button color="primary"
-            [disabled]="!selectedProfile()||!selectedBulbs().size||pending()"
-            (click)="apply()"><mat-icon>bolt</mat-icon>{{pending()?'Working…':'Apply profile'}}</button>
-    </section>
-    <section class="panel reset">
-        <h2>Reset bulbs</h2>
-        <p>Restore configured defaults.</p><button mat-stroked-button [disabled]="!selectedBulbs().size||pending()"
-            (click)="reset()">{{pending()?'Working…':'Reset selected'}}</button><button mat-flat-button color="warn"
-            [disabled]="!bulbs().length||pending()" (click)="resetAll()">{{pending()?'Working…':'Reset all bulbs
-            ('+bulbs().length+')'}}</button>
-    </section>
+  <section class="panel">
+    <h2>Apply profile</h2>
+    <mat-form-field appearance="outline">
+      <mat-label>Profile</mat-label>
+      <mat-select [value]="selectedProfile()" (selectionChange)="chooseProfile($event.value)">
+        @for (profile of profiles(); track profile.id) {
+          <mat-option [value]="profile.id">{{ profile.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <fieldset>
+      <legend>Bulbs</legend>
+      <div class="selection-actions">
+        <button mat-button type="button" (click)="selectAll()">Select all</button
+        ><button mat-button type="button" (click)="clearAll()">Clear all</button>
+      </div>
+      @for (bulb of bulbs(); track bulb.id) {
+        <mat-checkbox [checked]="selectedBulbs().has(bulb.id)" (change)="toggleBulb(bulb.id)"
+          >{{ bulb.name }} <span>{{ bulb.ipAddress }}</span></mat-checkbox
+        >
+      }
+    </fieldset>
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!selectedProfile() || !selectedBulbs().size || pending()"
+      (click)="apply()"
+    >
+      <mat-icon>bolt</mat-icon>{{ pending() ? 'Working…' : 'Apply profile' }}
+    </button>
+  </section>
+  <section class="panel reset">
+    <h2>Reset bulbs</h2>
+    <p>Restore configured defaults.</p>
+    <button mat-stroked-button [disabled]="!selectedBulbs().size || pending()" (click)="reset()">
+      {{ pending() ? 'Working…' : 'Reset selected' }}</button
+    ><button
+      mat-flat-button
+      color="warn"
+      [disabled]="!bulbs().length || pending()"
+      (click)="resetAll()"
+    >
+      {{
+        pending()
+          ? 'Working…'
+          : 'Reset all bulbs
+            (' +
+            bulbs().length +
+            ')'
+      }}
+    </button>
+  </section>
 </div>
 <section class="panel links">
-    <h2>Direct link</h2><app-direct-link [bulbs]="bulbs()" [profiles]="profiles()" />
+  <h2>Direct link</h2>
+  <app-direct-link [bulbs]="bulbs()" [profiles]="profiles()" />
 </section>

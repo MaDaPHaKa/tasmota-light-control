@@ -1,25 +1,25 @@
 :host {
-    display: block
+  display: block;
 }
 
-d1{
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
+d1 {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
 }
 
 .online {
-    color: var(--color-success)
+  color: var(--color-success);
 }
 
 .error {
-    color: var(--color-danger)
+  color: var(--color-danger);
 }
 
 .loading {
-    color: var(--color-warning)
+  color: var(--color-warning);
 }
 
 .idle {
-    color: var(--color-text-dim)
+  color: var(--color-text-dim);
 }

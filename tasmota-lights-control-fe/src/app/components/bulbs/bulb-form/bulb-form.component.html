@@ -1,7 +1,54 @@
 <form novalidate (submit)="$event.preventDefault(); onSubmit()">
-  <mat-form-field appearance="outline"><mat-label>Name</mat-label><input #formControl matInput [formField]="bulbForm.name" (input)="changed('name')" />@if(serverError('name')){<mat-error>{{serverError('name')}}</mat-error>}@else if(showError('name')){<mat-error>{{clientError('name')}}</mat-error>}</mat-form-field>
-  <mat-form-field appearance="outline"><mat-label>IPv4 address</mat-label><input #formControl matInput [formField]="bulbForm.ipAddress" (input)="changed('ipAddress')" />@if(serverError('ipAddress')){<mat-error>{{serverError('ipAddress')}}</mat-error>}@else if(showError('ipAddress')){<mat-error>{{clientError('ipAddress')}}</mat-error>}</mat-form-field>
-  <mat-form-field appearance="outline"><mat-label>Port</mat-label><input #formControl matInput type="number" [formField]="bulbForm.port" (input)="changed('port')" />@if(serverError('port')){<mat-error>{{serverError('port')}}</mat-error>}@else if(showError('port')){<mat-error>{{clientError('port')}}</mat-error>}</mat-form-field>
-  @if(lastTestResult();as test){<p class="test-result" [class.failure]="test.status!=='success'" role="status">Latest endpoint test: {{test.status}} — {{test.message}} <time [attr.datetime]="test.checkedAt">{{test.checkedAt|date:'medium'}}</time></p>}
-  <div class="actions"><button mat-button type="button" (click)="cancel.emit()">Cancel</button><button mat-stroked-button [disabled]="testPending()||pending()" type="button" (click)="test()">{{testPending()?'Testing…':'Test endpoint'}}</button><button mat-flat-button color="primary" type="submit" [disabled]="pending()">{{pending()?'Saving…':'Save bulb'}}</button></div>
+  <mat-form-field appearance="outline"
+    ><mat-label>Name</mat-label
+    ><input #formControl matInput [formField]="bulbForm.name" (input)="changed('name')" />
+    @if (serverError('name')) {
+      <mat-error>{{ serverError('name') }}</mat-error>
+    } @else if (showError('name')) {
+      <mat-error>{{ clientError('name') }}</mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field appearance="outline"
+    ><mat-label>IPv4 address</mat-label
+    ><input #formControl matInput [formField]="bulbForm.ipAddress" (input)="changed('ipAddress')" />
+    @if (serverError('ipAddress')) {
+      <mat-error>{{ serverError('ipAddress') }}</mat-error>
+    } @else if (showError('ipAddress')) {
+      <mat-error>{{ clientError('ipAddress') }}</mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field appearance="outline"
+    ><mat-label>Port</mat-label
+    ><input
+      #formControl
+      matInput
+      type="number"
+      [formField]="bulbForm.port"
+      (input)="changed('port')"
+    />
+    @if (serverError('port')) {
+      <mat-error>{{ serverError('port') }}</mat-error>
+    } @else if (showError('port')) {
+      <mat-error>{{ clientError('port') }}</mat-error>
+    }
+  </mat-form-field>
+  @if (lastTestResult(); as test) {
+    <p class="test-result" [class.failure]="test.status !== 'success'" role="status">
+      Latest endpoint test: {{ test.status }} — {{ test.message }}
+      <time [attr.datetime]="test.checkedAt">{{ test.checkedAt | date: 'medium' }}</time>
+    </p>
+  }
+  <div class="actions">
+    <button mat-button type="button" (click)="cancel.emit()">Cancel</button
+    ><button
+      mat-stroked-button
+      [disabled]="testPending() || pending()"
+      type="button"
+      (click)="test()"
+    >
+      {{ testPending() ? 'Testing…' : 'Test endpoint' }}</button
+    ><button mat-flat-button color="primary" type="submit" [disabled]="pending()">
+      {{ pending() ? 'Saving…' : 'Save bulb' }}
+    </button>
+  </div>
 </form>

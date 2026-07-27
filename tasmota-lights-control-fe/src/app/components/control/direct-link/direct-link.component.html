@@ -1,1 +1,32 @@
-<div class="link-form"><mat-form-field appearance="outline"><mat-label>Bulb</mat-label><mat-select [value]="bulbId()" (selectionChange)="selectBulb($event.value)">@for(b of bulbs();track b.id){<mat-option [value]="b.id">{{b.name}}</mat-option>}</mat-select></mat-form-field><mat-form-field appearance="outline"><mat-label>Profile</mat-label><mat-select [value]="profileId()" (selectionChange)="selectProfile($event.value)">@for(p of profiles();track p.id){<mat-option [value]="p.id">{{p.name}}</mat-option>}</mat-select></mat-form-field><button mat-flat-button color="primary" [disabled]="!bulbId()||!profileId()||pending()" (click)="generate()">{{pending()?'Generating…':'Generate link'}}</button></div>@if(url()){<div class="result"><mat-form-field appearance="outline"><mat-label>Generated direct link</mat-label><input matInput readonly [value]="url()"></mat-form-field><button mat-button (click)="copy()">Copy link</button></div>}
+<div class="link-form">
+  <mat-form-field appearance="outline"
+    ><mat-label>Bulb</mat-label
+    ><mat-select [value]="bulbId()" (selectionChange)="selectBulb($event.value)">
+      @for (b of bulbs(); track b.id) {
+        <mat-option [value]="b.id">{{ b.name }}</mat-option>
+      }
+    </mat-select></mat-form-field
+  ><mat-form-field appearance="outline"
+    ><mat-label>Profile</mat-label
+    ><mat-select [value]="profileId()" (selectionChange)="selectProfile($event.value)">
+      @for (p of profiles(); track p.id) {
+        <mat-option [value]="p.id">{{ p.name }}</mat-option>
+      }
+    </mat-select></mat-form-field
+  ><button
+    mat-flat-button
+    color="primary"
+    [disabled]="!bulbId() || !profileId() || pending()"
+    (click)="generate()"
+  >
+    {{ pending() ? 'Generating…' : 'Generate link' }}
+  </button>
+</div>
+@if (url()) {
+  <div class="result">
+    <mat-form-field appearance="outline"
+      ><mat-label>Generated direct link</mat-label
+      ><input matInput readonly [value]="url()" /></mat-form-field
+    ><button mat-button (click)="copy()">Copy link</button>
+  </div>
+}
