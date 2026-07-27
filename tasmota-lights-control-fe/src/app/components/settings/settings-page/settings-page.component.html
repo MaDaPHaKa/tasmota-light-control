@@ -7,22 +7,23 @@
   <h2>Reset defaults</h2>
   <p>These values apply when you reset one or more bulbs.</p>
   <form novalidate (submit)="$event.preventDefault(); save()">
-    <mat-form-field appearance="outline"
-      ><mat-label>Dimmer</mat-label
-      ><input
-        #formControl
-        matInput
-        type="number"
-        [formField]="settingsForm.dimmer"
-        (input)="changed('dimmer')"
-      />
-      @if (serverError('dimmer')) {
-        <mat-error>{{ serverError('dimmer') }}</mat-error>
-      } @else if (showClientError('dimmer')) {
-        <mat-error>{{ clientError('dimmer') }}</mat-error>
-      }
-    </mat-form-field>
     <fieldset>
+      <mat-form-field appearance="outline"
+        ><mat-label>Dimmer</mat-label
+        ><input
+          #formControl
+          matInput
+          type="number"
+          [formField]="settingsForm.dimmer"
+          (input)="changed('dimmer')"
+        />
+        @if (serverError('dimmer')) {
+          <mat-error>{{ serverError('dimmer') }}</mat-error>
+        } @else if (showClientError('dimmer')) {
+          <mat-error>{{ clientError('dimmer') }}</mat-error>
+        }
+      </mat-form-field>
+
       <legend>Mode</legend>
       <mat-radio-group #formControl [formField]="settingsForm.mode" (change)="changed('mode')"
         ><mat-radio-button value="rgb">RGB</mat-radio-button
@@ -34,46 +35,45 @@
         <p class="field-error">{{ serverError('mode') }}</p>
       }
     </fieldset>
-    @if (model().mode === 'rgb') {
-      <app-rgb-color-picker
-        [value]="model().rgbColor"
-        (valueChange)="updateRgbColor($event)"
-        [disabled]="pending()"
-      />
-      @if (serverError('rgbColor')) {
-        <p class="field-error">{{ serverError('rgbColor') }}</p>
-      } @else if (showClientError('rgbColor')) {
-        <p class="field-error">{{ clientError('rgbColor') }}</p>
-      }
-    } @else {
-      <mat-form-field appearance="outline"
-        ><mat-label>Color temperature (Kelvin)</mat-label
-        ><input
-          #formControl
-          matInput
-          type="number"
-          [formField]="settingsForm.colorTemperatureKelvin"
-          (input)="changed('colorTemperatureKelvin')"
+    <div class="section-config">
+      @if (model().mode === 'rgb') {
+        <app-rgb-color-picker
+          [value]="model().rgbColor"
+          (valueChange)="updateRgbColor($event)"
+          [disabled]="pending()"
         />
-        @if (serverError('colorTemperatureKelvin')) {
-          <mat-error>{{ serverError('colorTemperatureKelvin') }}</mat-error>
-        } @else if (showClientError('colorTemperatureKelvin')) {
-          <mat-error>{{ clientError('colorTemperatureKelvin') }}</mat-error>
+        @if (serverError('rgbColor')) {
+          <p class="field-error">{{ serverError('rgbColor') }}</p>
+        } @else if (showClientError('rgbColor')) {
+          <p class="field-error">{{ clientError('rgbColor') }}</p>
         }
-      </mat-form-field>
-    }
-    <app-mode-preview
-      [color]="model().rgbColor"
-      [text]="model().mode === 'rgb' ? model().rgbColor : model().colorTemperatureKelvin + ' K'"
-      [dimmer]="model().dimmer"
-    />
-    <button mat-flat-button color="primary" type="submit" [disabled]="pending()">
-      {{
-        pending()
-          ? 'Saving…'
-          : 'Save
-      settings'
-      }}
-    </button>
+      } @else {
+        <mat-form-field appearance="outline"
+          ><mat-label>Color temperature (Kelvin)</mat-label
+          ><input
+            #formControl
+            matInput
+            type="number"
+            [formField]="settingsForm.colorTemperatureKelvin"
+            (input)="changed('colorTemperatureKelvin')"
+          />
+          @if (serverError('colorTemperatureKelvin')) {
+            <mat-error>{{ serverError('colorTemperatureKelvin') }}</mat-error>
+          } @else if (showClientError('colorTemperatureKelvin')) {
+            <mat-error>{{ clientError('colorTemperatureKelvin') }}</mat-error>
+          }
+        </mat-form-field>
+      }
+    </div>
+    <div class="section-recap">
+      <app-mode-preview
+        [color]="model().rgbColor"
+        [text]="model().mode === 'rgb' ? model().rgbColor : model().colorTemperatureKelvin + ' K'"
+        [dimmer]="model().dimmer"
+      />
+      <button mat-flat-button color="primary" type="submit" [disabled]="pending()">
+        {{ pending() ? 'Saving…' : 'Save      settings' }}
+      </button>
+    </div>
   </form>
 </section>
