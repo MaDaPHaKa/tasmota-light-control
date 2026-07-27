@@ -44,10 +44,13 @@ export class BulbFormComponent {
   readonly controls = viewChildren<ElementRef<HTMLInputElement>>('formControl');
   readonly bulbForm = form(this.model, (p) => {
     required(p.name, { message: 'Name is required' });
-    required(p.ipAddress, { message: 'IP address is required' });
-    validate(p.name, ({ value }) => validateTrimmedRequired(value(), 80));
-    validate(p.ipAddress, ({ value }) => validateCanonicalIpv4(value()));
-    validate(p.port, ({ value }) => validateIntegerRange(value(), 1, 65535));
+    validate(p.name, ({ value }) => this.serverValidation('name') ?? validateTrimmedRequired(value(), 80));
+    validate(p.ipAddress, ({ value }) =>
+      this.serverValidation('ipAddress') ?? validateCanonicalIpv4(value()),
+    );
+    validate(p.port, ({ value }) =>
+      this.serverValidation('port') ?? validateIntegerRange(value(), 1, 65535),
+    );
   });
   constructor() {
     effect(() => {
@@ -78,13 +81,15 @@ export class BulbFormComponent {
   }
   protected showError(field: keyof BulbInput) {
     const control = this.bulbForm[field]();
-    return control.touched() && control.invalid();
+    return control.invalid() && (control.touched() || !!this.serverValidation(field));
   }
   protected clientError(field: keyof BulbInput) {
     return this.bulbForm[field]().errors()[0]?.message;
   }
-  protected serverError(field: keyof BulbInput) {
-    return this.failure()?.fields[field] ?? null;
+  private serverValidation(field: keyof BulbInput) {
+    const fields = this.failure()?.fields ?? {};
+    const message = fields[field] ?? fields[field === 'ipAddress' ? 'ip_address' : field];
+    return message ? { kind: 'server', message } : undefined;
   }
   private focusFirstInvalid() {
     this.controls()

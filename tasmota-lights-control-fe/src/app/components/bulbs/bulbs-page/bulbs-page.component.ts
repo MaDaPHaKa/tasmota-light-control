@@ -97,11 +97,7 @@ export class BulbsPageComponent {
         },
         error: (failure: ApiFailure) => {
           this.failure.set(failure);
-          if (
-            !Object.keys(failure.fields).length ||
-            Object.keys(failure.fields).some((key) => !['name', 'ipAddress', 'port'].includes(key))
-          )
-            this.snackbar.failure(failure);
+          this.snackbar.failure(failure, 'Could not save bulb.');
         },
       });
   }
@@ -132,11 +128,7 @@ export class BulbsPageComponent {
         next: (r) => this.lastTestResult.set(r),
         error: (failure: ApiFailure) => {
           this.failure.set(failure);
-          if (
-            !Object.keys(failure.fields).length ||
-            Object.keys(failure.fields).some((key) => !['ipAddress', 'port'].includes(key))
-          )
-            this.snackbar.failure(failure);
+          this.snackbar.failure(failure, 'Could not test bulb endpoint.');
         },
       });
   }

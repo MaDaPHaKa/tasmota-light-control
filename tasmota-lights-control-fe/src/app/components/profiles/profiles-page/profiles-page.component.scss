@@ -76,14 +76,13 @@ p {
   margin-top: 16px;
 }
 .editor {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin: -18px 0 25px;
   padding: 17px;
   border: 1px solid var(--color-primary);
   border-radius: 10px;
+  h2{
+    margin: 0.3em;
+    margin-bottom: 0.5em;
+  }
 }
 .editor strong {
   margin-right: auto;

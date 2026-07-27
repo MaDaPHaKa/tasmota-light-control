@@ -21,6 +21,7 @@ import { ColorPicker } from '@acrodata/color-picker';
 export class RgbColorPickerComponent {
   readonly value = model.required<string>();
   readonly disabled = input(false);
+  readonly hideSwatch = input(false);
   private readonly hexInput = viewChild.required<ElementRef<HTMLInputElement>>('hexInput');
 
   focus(): void {

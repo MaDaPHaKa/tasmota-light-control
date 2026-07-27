@@ -1,29 +1,30 @@
 <form novalidate (submit)="$event.preventDefault(); onSubmit()">
-  <mat-form-field appearance="outline"
-    ><mat-label>Name</mat-label
-    ><input #formControl matInput [formField]="profileForm.name" (input)="changed('name')" />
-    @if (serverError('name')) {
-      <mat-error>{{ serverError('name') }}</mat-error>
-    } @else if (showClientError('name')) {
-      <mat-error>{{ clientError('name') }}</mat-error>
-    }
-  </mat-form-field>
-  <mat-form-field appearance="outline"
-    ><mat-label>Dimmer</mat-label
-    ><input
-      #formControl
-      matInput
-      type="number"
-      [formField]="profileForm.dimmer"
-      (input)="changed('dimmer')"
-    />
-    @if (serverError('dimmer')) {
-      <mat-error>{{ serverError('dimmer') }}</mat-error>
-    } @else if (showClientError('dimmer')) {
-      <mat-error>{{ clientError('dimmer') }}</mat-error>
-    }
-  </mat-form-field>
   <fieldset>
+    <mat-form-field appearance="outline"
+      ><mat-label>Name</mat-label
+      ><input #formControl matInput [formField]="profileForm.name" (input)="changed('name')" />
+      @if (serverError('name')) {
+        <mat-error>{{ serverError('name') }}</mat-error>
+      } @else if (showClientError('name')) {
+        <mat-error>{{ clientError('name') }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline"
+      ><mat-label>Dimmer</mat-label
+      ><input
+        #formControl
+        matInput
+        type="number"
+        [formField]="profileForm.dimmer"
+        (input)="changed('dimmer')"
+      />
+      @if (serverError('dimmer')) {
+        <mat-error>{{ serverError('dimmer') }}</mat-error>
+      } @else if (showClientError('dimmer')) {
+        <mat-error>{{ clientError('dimmer') }}</mat-error>
+      }
+    </mat-form-field>
+
     <legend>Mode</legend>
     <mat-radio-group #formControl [formField]="profileForm.mode" (change)="changed('mode')"
       ><mat-radio-button value="rgb">RGB</mat-radio-button
@@ -40,6 +41,7 @@
       [value]="model().rgbColor"
       (valueChange)="updateRgbColor($event)"
       [disabled]="pending()"
+      [hideSwatch]="true"
     />
     @if (serverError('rgbColor')) {
       <p class="field-error">{{ serverError('rgbColor') }}</p>

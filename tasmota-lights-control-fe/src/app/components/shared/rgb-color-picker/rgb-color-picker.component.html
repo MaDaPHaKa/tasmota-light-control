@@ -18,5 +18,7 @@
     />
     <mat-hint id="rgb-format">Uppercase #RRGGBB</mat-hint>
   </mat-form-field>
-  <span class="swatch" [style.background-color]="value()" aria-hidden="true"></span>
+  @if (!hideSwatch()) {
+    <span class="swatch" [style.background-color]="value()" aria-hidden="true"></span>
+  }
 </div>

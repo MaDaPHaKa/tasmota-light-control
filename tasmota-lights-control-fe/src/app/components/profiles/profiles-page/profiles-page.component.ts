@@ -64,7 +64,7 @@ export class ProfilesPageComponent {
         },
         error: (failure: ApiFailure) => {
           this.failure.set(failure);
-          this.snackbar.failure(failure);
+          this.snackbar.failure(failure, 'Could not save profile.');
         },
       });
   }

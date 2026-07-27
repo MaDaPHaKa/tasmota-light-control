@@ -2,18 +2,14 @@
   <mat-form-field appearance="outline"
     ><mat-label>Name</mat-label
     ><input #formControl matInput [formField]="bulbForm.name" (input)="changed('name')" />
-    @if (serverError('name')) {
-      <mat-error>{{ serverError('name') }}</mat-error>
-    } @else if (showError('name')) {
+    @if (showError('name')) {
       <mat-error>{{ clientError('name') }}</mat-error>
     }
   </mat-form-field>
   <mat-form-field appearance="outline"
     ><mat-label>IPv4 address</mat-label
     ><input #formControl matInput [formField]="bulbForm.ipAddress" (input)="changed('ipAddress')" />
-    @if (serverError('ipAddress')) {
-      <mat-error>{{ serverError('ipAddress') }}</mat-error>
-    } @else if (showError('ipAddress')) {
+    @if (showError('ipAddress')) {
       <mat-error>{{ clientError('ipAddress') }}</mat-error>
     }
   </mat-form-field>
@@ -26,9 +22,7 @@
       [formField]="bulbForm.port"
       (input)="changed('port')"
     />
-    @if (serverError('port')) {
-      <mat-error>{{ serverError('port') }}</mat-error>
-    } @else if (showError('port')) {
+    @if (showError('port')) {
       <mat-error>{{ clientError('port') }}</mat-error>
     }
   </mat-form-field>
