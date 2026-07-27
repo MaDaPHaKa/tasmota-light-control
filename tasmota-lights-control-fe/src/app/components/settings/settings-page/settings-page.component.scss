@@ -3,7 +3,6 @@
 }
 
 .settings-card {
-  max-width: 760px;
   padding: 28px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -92,5 +91,16 @@ h2 {
 }
 
 .section-recap{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   padding-top: 0.75em;
+}
+
+@media (max-width: 520px) {
+  .section-recap {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
