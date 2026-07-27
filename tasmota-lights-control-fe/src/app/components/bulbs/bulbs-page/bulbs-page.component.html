@@ -23,23 +23,24 @@
       (cancel)="showForm.set(false)"
     />
   </section>
-}
-<section class="device-section">
-  <div class="section-header">
-    <div>
-      <h2>All bulbs</h2>
-      <span class="muted">{{ bulbs().length }} registered devices</span>
+} @else {
+  <section class="device-section">
+    <div class="section-header">
+      <div>
+        <h2>All bulbs</h2>
+        <span class="muted">{{ bulbs().length }} registered devices</span>
+      </div>
     </div>
-  </div>
-  <app-bulb-list
-    [bulbs]="bulbs()"
-    [profiles]="profiles()"
-    [statuses]="statuses()"
-    [pendingActionIds]="pendingActionIds()"
-    (edit)="edit($event)"
-    (delete)="remove($event)"
-    (test)="test($event)"
-    (refreshStatus)="refresh($event)"
-    (reset)="reset($event)"
-  />
-</section>
+    <app-bulb-list
+      [bulbs]="bulbs()"
+      [profiles]="profiles()"
+      [statuses]="statuses()"
+      [pendingActionIds]="pendingActionIds()"
+      (edit)="edit($event)"
+      (delete)="remove($event)"
+      (test)="test($event)"
+      (refreshStatus)="refresh($event)"
+      (reset)="reset($event)"
+    />
+  </section>
+}

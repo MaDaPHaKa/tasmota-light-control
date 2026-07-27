@@ -21,7 +21,8 @@
       (cancel)="showForm.set(false)"
     />
   </section>
-}
+} @else {
 <section class="profile-grid">
   <app-profile-list [profiles]="profiles()" (edit)="edit($event)" (delete)="remove($event)" />
 </section>
+}
