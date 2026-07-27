@@ -9,8 +9,8 @@
 }
 
 .list article {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 2.5fr) auto;
   align-items: center;
   gap: 16px;
   padding: 15px;
@@ -20,7 +20,7 @@
 }
 
 div.status {
-  flex-grow: 1;
+  min-width: 0;
 }
 
 strong,
@@ -41,4 +41,26 @@ span {
 .actions {
   display: flex;
   gap: 2px;
+}
+
+@media (max-width: 850px) {
+  .list article {
+    grid-template-columns: minmax(140px, 1fr) minmax(0, 2fr);
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 560px) {
+  .list article {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    grid-column: auto;
+    justify-content: flex-start;
+  }
 }
