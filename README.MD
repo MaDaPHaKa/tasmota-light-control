@@ -108,10 +108,6 @@ Current scripts are valid on Arch Linux when Bash, npm, and Cargo are installed.
 
 Do not run them with `fish build.sh` or source them in Fish. Root `build.sh` expects execution from repository root; frontend/backend scripts resolve their own directories. `set -euo pipefail` is Bash syntax, not Fish syntax.
 
-## API
-
-OpenAPI contract: `.docs/openapi.yaml`.
-
 Health endpoints:
 
 ```text
