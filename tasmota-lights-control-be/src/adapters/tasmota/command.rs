@@ -16,7 +16,7 @@ pub fn command(
             speed,
         },
         _ => {
-            let kelvin = u32::from(kelvin.unwrap_or(3000));
+            let kelvin = u32::from(kelvin.unwrap_or(2000));
             Command::ApplyColorTemperature {
                 dimmer,
                 ct: ((1_000_000 + kelvin / 2) / kelvin) as u16,

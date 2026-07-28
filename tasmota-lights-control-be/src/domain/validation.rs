@@ -57,11 +57,11 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
             if !input
                 .color_temperature_kelvin
                 .0
-                .is_some_and(|value| (3000..=6000).contains(&value))
+                .is_some_and(|value| (2000..=6000).contains(&value))
             {
                 fields.insert(
                     "colorTemperatureKelvin".into(),
-                    "Color temperature must be between 3000 and 6000".into(),
+                    "Color temperature must be between 2000 and 6000".into(),
                 );
             }
         }

@@ -30,6 +30,11 @@ dd {
   white-space: nowrap;
 }
 
+.mode-value {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .online {
   color: var(--color-success);
 }

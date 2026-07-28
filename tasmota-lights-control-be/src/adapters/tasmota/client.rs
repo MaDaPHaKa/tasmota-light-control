@@ -16,7 +16,10 @@ pub fn endpoint_url(endpoint: &Endpoint, command: &Command) -> AppResult<url::Ur
         .map_err(|_| AppError::Internal)?;
     url.set_port(Some(endpoint.port))
         .map_err(|_| AppError::Internal)?;
-    url.query_pairs_mut().append_pair("cmnd", &command.text());
+    let encoded_command = url::form_urlencoded::byte_serialize(command.text().as_bytes())
+        .collect::<String>()
+        .replace('+', "%20");
+    url.set_query(Some(&format!("cmnd={encoded_command}")));
     Ok(url)
 }
 

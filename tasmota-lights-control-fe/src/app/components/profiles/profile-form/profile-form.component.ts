@@ -71,7 +71,7 @@ export class ProfileFormComponent {
     validate(p.colorTemperatureKelvin, ({ value }) =>
       this.serverValidation('colorTemperatureKelvin') ??
         (this.model().mode === 'color_temperature'
-          ? validateIntegerRange(value(), 3000, 6000)
+          ? validateIntegerRange(value(), 2000, 6000)
           : undefined),
     );
   });

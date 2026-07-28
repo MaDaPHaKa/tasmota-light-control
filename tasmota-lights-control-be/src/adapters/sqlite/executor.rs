@@ -44,7 +44,7 @@ impl Db {
                     .query_row("SELECT COUNT(*) FROM reset_settings WHERE singleton=1", [], |row| row.get(0))
                     .map_err(|error| error.to_string())?;
                 if settings_count == 0 {
-                        connection.execute("INSERT INTO reset_settings(singleton,dimmer,mode,rgb_color,color_temperature_kelvin,fade,speed) VALUES(1,100,'color_temperature',NULL,3000,1,4)", [])
+                        connection.execute("INSERT INTO reset_settings(singleton,dimmer,mode,rgb_color,color_temperature_kelvin,fade,speed) VALUES(1,100,'color_temperature',NULL,2000,1,4)", [])
                         .map_err(|error| error.to_string())?;
                 }
                 crate::adapters::sqlite::settings_repository::get(&connection)
