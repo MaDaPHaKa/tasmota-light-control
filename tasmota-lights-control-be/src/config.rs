@@ -53,9 +53,9 @@ impl Config {
         let get = |key: &str, value: Option<String>| std::env::var(key).ok().or(value);
         let log_level = get("TLC_LOG_LEVEL", file.log_level).unwrap_or_else(|| {
             if cfg!(debug_assertions) {
-                "info"
+                "trace"
             } else {
-                "error"
+                "info"
             }
             .into()
         });

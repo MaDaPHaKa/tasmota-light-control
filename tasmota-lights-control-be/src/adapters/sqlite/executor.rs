@@ -14,6 +14,7 @@ use tokio::{
     sync::{mpsc, oneshot},
     task::JoinHandle,
 };
+use tracing::error;
 pub struct Db {
     sender: Mutex<Option<mpsc::Sender<DbJob>>>,
     readiness: Arc<AtomicBool>,
@@ -79,19 +80,19 @@ impl Db {
     ) -> AppResult<T> {
         let (tx, rx) = oneshot::channel();
         if !self.readiness.load(Ordering::Acquire) {
-            tracing::error!("database unavailable before operation dispatch");
+            error!("database unavailable before operation dispatch");
             return Err(AppError::Unavailable);
         }
         let sender = self
             .sender
             .lock()
             .map_err(|_| {
-                tracing::error!("database sender lock failed");
+                error!("database sender lock failed");
                 AppError::Unavailable
             })?
             .clone()
             .ok_or_else(|| {
-                tracing::error!("database worker sender unavailable");
+                error!("database worker sender unavailable");
                 AppError::Unavailable
             })?;
         sender
@@ -101,15 +102,15 @@ impl Db {
                 }),
             })
             .map_err(|_| {
-                tracing::error!("database operation queue unavailable");
+                error!("database operation queue unavailable");
                 AppError::Unavailable
             })?;
         let result = rx.await.map_err(|_| {
-            tracing::error!("database worker dropped operation result");
+            error!("database worker dropped operation result");
             AppError::Unavailable
         })?;
         if let Err(error @ (AppError::Internal | AppError::Unavailable)) = &result {
-            tracing::error!(error = ?error, "database operation failed");
+            error!(error = ?error, "database operation failed");
         }
         result
     }

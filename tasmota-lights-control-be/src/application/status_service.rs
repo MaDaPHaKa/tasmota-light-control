@@ -13,6 +13,7 @@ use crate::{
 use futures_util::{StreamExt, stream};
 use rusqlite::TransactionBehavior;
 use std::sync::Arc;
+use tracing::error;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -80,7 +81,7 @@ impl StatusService {
         {
             Ok(endpoint) => endpoint,
             Err(_) => {
-                tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                error!(bulb_id=%bulb.id, "saved bulb violates target policy");
                 return Self::unavailable(bulb.id, ResultCode::InvalidResponse);
             }
         };
@@ -97,7 +98,7 @@ impl StatusService {
                 checked_at: now(),
             },
             Err(status) => {
-                tracing::error!(
+                error!(
                     bulb_id = %bulb.id,
                     status = ?status,
                     "tasmota status check failed"
@@ -162,7 +163,7 @@ impl StatusService {
                     .await
             }
             Err(_) => {
-                tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                error!(bulb_id=%bulb.id, "saved bulb violates target policy");
                 ResultCode::InvalidResponse
             }
         };

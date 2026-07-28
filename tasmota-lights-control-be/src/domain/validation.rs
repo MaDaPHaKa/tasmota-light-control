@@ -12,6 +12,14 @@ pub fn name(input: String) -> AppResult<(String, String)> {
     Ok((display.to_lowercase(), display))
 }
 pub type ValidLight = (String, String, u8, String, Option<String>, Option<u16>);
+pub type ValidSettings = (
+    u8,
+    String,
+    Option<String>,
+    Option<u16>,
+    Option<u8>,
+    Option<u8>,
+);
 pub fn light(input: LightInput) -> AppResult<ValidLight> {
     let mut fields = BTreeMap::new();
     let display_name = input.name.trim().to_owned();
@@ -84,16 +92,7 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
         Err(AppError::Validation(fields))
     }
 }
-pub fn settings(
-    input: SettingsInput,
-) -> AppResult<(
-    u8,
-    String,
-    Option<String>,
-    Option<u16>,
-    Option<u8>,
-    Option<u8>,
-)> {
+pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
     let (_, _, dimmer, mode, rgb, kelvin) = light(LightInput {
         name: "settings".into(),
         dimmer: input.dimmer,

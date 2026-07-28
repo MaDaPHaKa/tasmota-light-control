@@ -4,6 +4,7 @@ use crate::{
     http::dto::AppState,
 };
 use axum::{Json, extract::State, http::StatusCode};
+use tracing::debug;
 pub async fn list(State(state): State<AppState>) -> AppResult<Json<Vec<Profile>>> {
     Ok(Json(state.profiles.list().await?))
 }
@@ -18,7 +19,7 @@ pub async fn create(
     ApiJson(input): ApiJson<LightInput>,
 ) -> AppResult<(StatusCode, Json<Profile>)> {
     let profile = state.profiles.save(None, input).await?;
-    tracing::info!(action="create", resource="profile", resource_id=%profile.id, result_code="success", "CRUD completed");
+    debug!(action="create", resource="profile", resource_id=%profile.id, result_code="success", "CRUD completed");
     Ok((StatusCode::CREATED, Json(profile)))
 }
 pub async fn replace(
@@ -27,7 +28,7 @@ pub async fn replace(
     ApiJson(input): ApiJson<LightInput>,
 ) -> AppResult<Json<Profile>> {
     let profile = state.profiles.save(Some(id), input).await?;
-    tracing::info!(action="replace", resource="profile", resource_id=%id, result_code="success", "CRUD completed");
+    debug!(action="replace", resource="profile", resource_id=%id, result_code="success", "CRUD completed");
     Ok(Json(profile))
 }
 pub async fn delete(
@@ -35,6 +36,6 @@ pub async fn delete(
     ApiPath(id): ApiPath<uuid::Uuid>,
 ) -> AppResult<StatusCode> {
     state.profiles.delete(id).await?;
-    tracing::info!(action="delete", resource="profile", resource_id=%id, result_code="success", "CRUD completed");
+    debug!(action="delete", resource="profile", resource_id=%id, result_code="success", "CRUD completed");
     Ok(StatusCode::NO_CONTENT)
 }

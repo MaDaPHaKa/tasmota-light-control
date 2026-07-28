@@ -4,6 +4,7 @@ use crate::{
     http::dto::AppState,
 };
 use axum::{Json, extract::State};
+use tracing::debug;
 pub async fn get(State(state): State<AppState>) -> AppResult<Json<Settings>> {
     Ok(Json(state.settings.get().await?))
 }
@@ -12,7 +13,7 @@ pub async fn put(
     ApiJson(input): ApiJson<SettingsInput>,
 ) -> AppResult<Json<Settings>> {
     let settings = state.settings.save(input).await?;
-    tracing::info!(
+    debug!(
         action = "replace",
         resource = "reset_settings",
         result_code = "success",

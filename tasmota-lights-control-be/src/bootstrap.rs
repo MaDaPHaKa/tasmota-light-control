@@ -21,7 +21,7 @@ use std::{
     },
 };
 use tokio::sync::Semaphore;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 pub async fn run() {
     let config = match Config::load(Arguments::parse().config) {
         Ok(config) => config,
@@ -125,7 +125,7 @@ async fn serve(config: Config) -> Result<(), String> {
                 Ok(Err(error)) => Err(format!("server failed: {error}")),
                 Err(_) => {
                     error!(grace_ms = config.shutdown.as_millis(), "shutdown grace elapsed");
-                    info!(grace_ms = config.shutdown.as_millis(), "remaining server tasks cancelled");
+                    warn!(grace_ms = config.shutdown.as_millis(), "remaining server tasks cancelled");
                     Ok(())
                 }
             }

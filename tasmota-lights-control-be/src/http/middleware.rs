@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use std::time::Instant;
-use tracing::info;
+use tracing::debug;
 use uuid::Uuid;
 
 pub async fn request_id(mut request: Request, next: Next) -> Response {
@@ -44,7 +44,7 @@ pub async fn trace(request: Request, next: Next) -> Response {
         .map(|request_id| request_id.0.clone())
         .unwrap_or_else(|| "unknown".to_owned());
     let response = next.run(request).await;
-    info!(
+    debug!(
         %request_id,
         %method,
         %route,

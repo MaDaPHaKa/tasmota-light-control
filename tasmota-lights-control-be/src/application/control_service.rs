@@ -19,6 +19,7 @@ use futures_util::{StreamExt, stream};
 use rusqlite::TransactionBehavior;
 use std::{collections::HashSet, sync::Arc};
 use tokio::sync::Semaphore;
+use tracing::{debug, error};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -61,18 +62,18 @@ impl ControlService {
                 {
                     Ok(endpoint) => client.invoke(endpoint, command).await,
                     Err(_) => {
-                        tracing::error!(bulb_id=%bulb.id, "saved bulb violates target policy");
+                        error!(bulb_id=%bulb.id, "saved bulb violates target policy");
                         ResultCode::InvalidResponse
                     }
                 };
-                tracing::info!(
+                debug!(
                     bulb_id=%bulb.id,
                     result_code=?status,
                     duration_ms=target_started.elapsed().as_millis(),
                     "target call completed"
                 );
                 if !matches!(status, ResultCode::Success) {
-                    tracing::error!(
+                    error!(
                         bulb_id = %bulb.id,
                         result_code = ?status,
                         "tasmota control call failed"
@@ -111,7 +112,7 @@ impl ControlService {
             results,
         };
         if result.summary.failed > 0 {
-            tracing::error!(
+            error!(
                 operation,
                 profile_id=?profile_id,
                 target_count=result.summary.total,
@@ -121,7 +122,7 @@ impl ControlService {
                 "control operation completed with failures"
             );
         } else {
-            tracing::info!(
+            debug!(
                 operation,
                 profile_id=?profile_id,
                 target_count=result.summary.total,
