@@ -36,8 +36,8 @@ pub fn status(value: &Value) -> DeviceState {
         .map(|value| value as u16);
     let explicit = text(status, &["Mode", "ColorMode", "LightMode"]).and_then(mode);
     state.mode = explicit.or_else(|| match (&state.rgb_color, state.ct) {
-        (Some(_), None) => Some("rgb".into()),
-        (None, Some(_)) => Some("color_temperature".into()),
+        (Some(color), _) if color != "#000000" => Some("rgb".into()),
+        (_, Some(_)) => Some("color_temperature".into()),
         _ => None,
     });
     if state.mode.is_none() {
@@ -115,8 +115,8 @@ fn power(value: &str) -> Option<String> {
 
 fn color(value: &str) -> Option<String> {
     let value = value.trim().strip_prefix('#').unwrap_or(value.trim());
-    (value.len() == 6 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
-        .then(|| format!("#{}", value.to_ascii_uppercase()))
+    (value.len() >= 6 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| format!("#{}", value[..6].to_ascii_uppercase()))
 }
 
 fn mode(value: &str) -> Option<String> {
@@ -146,5 +146,21 @@ mod tests {
                 Some("#FF8000".into())
             )
         );
+    }
+
+    #[test]
+    fn status_reads_rgb_from_rgbcct_color() {
+        let state = status(&json!({
+            "StatusSTS": {
+                "POWER": "ON",
+                "Dimmer": 89,
+                "Color": "E38C520000",
+                "CT": 500
+            }
+        }));
+
+        assert_eq!(state.mode, Some("rgb".into()));
+        assert_eq!(state.rgb_color, Some("#E38C52".into()));
+        assert_eq!(state.ct, Some(500));
     }
 }

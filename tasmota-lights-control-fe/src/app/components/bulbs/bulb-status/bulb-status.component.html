@@ -19,7 +19,17 @@
         </div>
         <div>
           <dt>Mode/value</dt>
-          <dd class="mode-value">{{ status.mode ?? 'Unknown' }} · {{ value() }}</dd>
+          <dd class="mode-value">
+            {{ status.mode ?? 'Unknown' }} · {{ value() }}
+            @if (status.mode === 'rgb' && status.rgbColor; as color) {
+              <span
+                class="color-swatch"
+                [style.background-color]="color"
+                [attr.aria-label]="'RGB color ' + color"
+                [attr.title]="color"
+              ></span>
+            }
+          </dd>
         </div>
         <div>
           <dt>Profile</dt>

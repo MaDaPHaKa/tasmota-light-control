@@ -8,7 +8,7 @@ use crate::{
 use futures_util::StreamExt;
 use std::{sync::Arc, time::Duration};
 use tokio::{sync::Semaphore, time::timeout};
-use tracing::error;
+use tracing::{debug, error};
 
 pub fn endpoint_url(endpoint: &Endpoint, command: &Command) -> AppResult<url::Url> {
     let mut url = url::Url::parse("http://0.0.0.0/cm").map_err(|_| AppError::Internal)?;
@@ -49,6 +49,11 @@ impl TasmotaClient {
             return Err(ResultCode::DeviceError);
         }
         let url = endpoint_url(&endpoint, &command).map_err(|_| ResultCode::InvalidResponse)?;
+        debug!(
+            url = %url,
+            command = %command_text,
+            "tasmota request"
+        );
         let result = timeout(self.timeout, async {
             let _permit = self
                 .outbound

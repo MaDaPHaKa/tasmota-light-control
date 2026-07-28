@@ -96,8 +96,8 @@ fn apply_text(value: String, dimmer: u8, fade: Option<u8>, speed: Option<u8>) ->
     if let Some(speed) = speed {
         commands.push(format!("Speed {speed}"));
     }
-    commands.push(format!("Dimmer {dimmer}"));
     commands.push(value);
+    commands.push(format!("Dimmer {dimmer}"));
     format!("Backlog0 {}", commands.join("; "))
 }
 
