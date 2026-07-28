@@ -7,6 +7,8 @@ pub struct Settings {
     pub mode: String,
     pub rgb_color: RequiredOption<String>,
     pub color_temperature_kelvin: RequiredOption<u16>,
+    pub fade: Option<u8>,
+    pub speed: Option<u8>,
 }
 
 #[derive(Deserialize)]
@@ -16,4 +18,6 @@ pub struct SettingsInput {
     pub mode: String,
     pub rgb_color: RequiredOption<String>,
     pub color_temperature_kelvin: RequiredOption<i64>,
+    pub fade: Option<i64>,
+    pub speed: Option<i64>,
 }

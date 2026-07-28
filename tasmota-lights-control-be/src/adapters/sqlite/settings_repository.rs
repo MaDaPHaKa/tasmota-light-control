@@ -9,7 +9,7 @@ use crate::{
 };
 use rusqlite::{Connection, TransactionBehavior, params};
 pub fn get(connection: &Connection) -> AppResult<Settings> {
-    let settings = database(connection.query_row("SELECT dimmer,mode,rgb_color,color_temperature_kelvin FROM reset_settings WHERE singleton=1", [], |row| Ok(Settings { dimmer: row.get(0)?, mode: row.get(1)?, rgb_color: RequiredOption(row.get(2)?), color_temperature_kelvin: RequiredOption(row.get(3)?) })))?;
+    let settings = database(connection.query_row("SELECT dimmer,mode,rgb_color,color_temperature_kelvin,fade,speed FROM reset_settings WHERE singleton=1", [], |row| Ok(Settings { dimmer: row.get(0)?, mode: row.get(1)?, rgb_color: RequiredOption(row.get(2)?), color_temperature_kelvin: RequiredOption(row.get(3)?), fade: row.get(4)?, speed: row.get(5)? })))?;
     validate_settings(SettingsInput {
         dimmer: i64::from(settings.dimmer),
         mode: settings.mode.clone(),
@@ -17,6 +17,8 @@ pub fn get(connection: &Connection) -> AppResult<Settings> {
         color_temperature_kelvin: RequiredOption(
             settings.color_temperature_kelvin.0.map(i64::from),
         ),
+        fade: settings.fade.map(i64::from),
+        speed: settings.speed.map(i64::from),
     })
     .map_err(|_| AppError::Internal)?;
     Ok(settings)
@@ -25,7 +27,7 @@ pub fn save(connection: &mut Connection, settings: Settings) -> AppResult<Settin
     let transaction = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| AppError::Internal)?;
-    if database(transaction.execute("UPDATE reset_settings SET dimmer=?1,mode=?2,rgb_color=?3,color_temperature_kelvin=?4 WHERE singleton=1", params![settings.dimmer, settings.mode, settings.rgb_color.0, settings.color_temperature_kelvin.0]))? != 1 {
+    if database(transaction.execute("UPDATE reset_settings SET dimmer=?1,mode=?2,rgb_color=?3,color_temperature_kelvin=?4,fade=?5,speed=?6 WHERE singleton=1", params![settings.dimmer, settings.mode, settings.rgb_color.0, settings.color_temperature_kelvin.0, settings.fade, settings.speed]))? != 1 {
         return Err(AppError::Internal);
     }
     transaction.commit().map_err(|_| AppError::Internal)?;

@@ -143,7 +143,7 @@ impl ControlService {
             .try_acquire_owned()
             .map_err(|_| AppError::TooMany)?;
         let snapshot_ids = ids.clone();
-        let (profile, bulbs) = self
+        let (profile, settings, bulbs) = self
             .bulbs
             .db
             .run(move |connection| {
@@ -151,12 +151,13 @@ impl ControlService {
                     .transaction_with_behavior(TransactionBehavior::Deferred)
                     .map_err(|_| AppError::Internal)?;
                 let profile = profile_repository::get(&transaction, profile_id)?;
+                let settings = settings_repository::get(&transaction)?;
                 let bulbs = snapshot_ids
                     .iter()
                     .map(|id| bulb_repository::get(&transaction, *id))
                     .collect::<AppResult<Vec<_>>>()?;
                 transaction.commit().map_err(|_| AppError::Internal)?;
-                Ok((profile, bulbs))
+                Ok((profile, settings, bulbs))
             })
             .await?;
         let command = command(
@@ -164,6 +165,8 @@ impl ControlService {
             &profile.mode,
             profile.rgb_color.as_deref(),
             profile.color_temperature_kelvin,
+            settings.fade,
+            settings.speed,
         );
         Ok(self
             .execute("apply_profile", Some(profile.id), bulbs, command)
@@ -200,6 +203,8 @@ impl ControlService {
             &settings.mode,
             settings.rgb_color.0.as_deref(),
             settings.color_temperature_kelvin.0,
+            settings.fade,
+            settings.speed,
         );
         Ok(self.execute("reset", None, bulbs, command).await)
     }
@@ -228,6 +233,8 @@ impl ControlService {
             &settings.mode,
             settings.rgb_color.0.as_deref(),
             settings.color_temperature_kelvin.0,
+            settings.fade,
+            settings.speed,
         );
         Ok(self.execute("reset_all", None, bulbs, command).await)
     }

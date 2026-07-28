@@ -84,7 +84,16 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
         Err(AppError::Validation(fields))
     }
 }
-pub fn settings(input: SettingsInput) -> AppResult<(u8, String, Option<String>, Option<u16>)> {
+pub fn settings(
+    input: SettingsInput,
+) -> AppResult<(
+    u8,
+    String,
+    Option<String>,
+    Option<u16>,
+    Option<u8>,
+    Option<u8>,
+)> {
     let (_, _, dimmer, mode, rgb, kelvin) = light(LightInput {
         name: "settings".into(),
         dimmer: input.dimmer,
@@ -92,7 +101,32 @@ pub fn settings(input: SettingsInput) -> AppResult<(u8, String, Option<String>, 
         rgb_color: input.rgb_color,
         color_temperature_kelvin: input.color_temperature_kelvin,
     })?;
-    Ok((dimmer, mode, rgb, kelvin))
+    let mut fields = BTreeMap::new();
+    if input.fade.is_some_and(|value| !(0..=1).contains(&value)) {
+        fields.insert("fade".into(), "Fade must be 0 or 1".into());
+    }
+    if input.speed.is_some_and(|value| !(1..=40).contains(&value)) {
+        fields.insert("speed".into(), "Speed must be between 1 and 40".into());
+    }
+    if !fields.is_empty() {
+        return Err(AppError::Validation(fields));
+    }
+    Ok((
+        dimmer,
+        mode,
+        rgb,
+        kelvin,
+        input
+            .fade
+            .map(u8::try_from)
+            .transpose()
+            .map_err(|_| AppError::Internal)?,
+        input
+            .speed
+            .map(u8::try_from)
+            .transpose()
+            .map_err(|_| AppError::Internal)?,
+    ))
 }
 pub fn now() -> String {
     OffsetDateTime::now_utc()

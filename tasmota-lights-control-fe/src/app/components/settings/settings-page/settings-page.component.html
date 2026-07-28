@@ -57,6 +57,19 @@
         </mat-form-field>
       }
     </div>
+    <fieldset class="fade-settings">
+       <legend>Fading</legend>
+      <mat-form-field appearance="outline">
+        <mat-label>Fade</mat-label>
+        <input #formControl matInput type="number" placeholder="Optional" [formField]="settingsForm.fade" (input)="changed('fade')" />
+        @if (showClientError('fade')) { <mat-error>{{ clientError('fade') }}</mat-error> }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Speed</mat-label>
+        <input #formControl matInput type="number" placeholder="Optional" [formField]="settingsForm.speed" (input)="changed('speed')" />
+        @if (showClientError('speed')) { <mat-error>{{ clientError('speed') }}</mat-error> }
+      </mat-form-field>
+    </fieldset>
     <div class="section-recap">
       <app-mode-preview
         [color]="model().rgbColor"

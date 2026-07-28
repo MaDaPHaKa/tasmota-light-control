@@ -24,7 +24,7 @@ import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb
 import { SnackbarService } from '@services/snackbar.service';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
 
-type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin';
+type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'fade' | 'speed';
 
 @Component({
   selector: 'app-settings-page',
@@ -52,6 +52,8 @@ export class SettingsPageComponent {
     mode: 'color_temperature' as 'rgb' | 'color_temperature',
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
+    fade: 1 as number | null,
+    speed: 4 as number | null,
   });
   protected readonly pending = signal(false);
   protected readonly failure = signal<ApiFailure | null>(null);
@@ -71,6 +73,14 @@ export class SettingsPageComponent {
           ? validateIntegerRange(value(), 3000, 6000)
           : undefined),
     );
+    validate(p.fade, ({ value }) => {
+      const current = value();
+      return current === null || Number.isNaN(current) ? undefined : validateIntegerRange(current, 0, 1);
+    });
+    validate(p.speed, ({ value }) => {
+      const current = value();
+      return current === null || Number.isNaN(current) ? undefined : validateIntegerRange(current, 1, 40);
+    });
   });
   constructor() {
     this.pending.set(true);
@@ -126,19 +136,25 @@ export class SettingsPageComponent {
       return;
     }
     const v = this.model();
+    const fade = Number.isInteger(v.fade) ? v.fade : null;
+    const speed = Number.isInteger(v.speed) ? v.speed : null;
     const settings: ResetSettings =
       v.mode === 'rgb'
         ? {
             dimmer: v.dimmer,
             mode: 'rgb',
             rgbColor: v.rgbColor.toUpperCase(),
-            colorTemperatureKelvin: null,
+             colorTemperatureKelvin: null,
+             fade,
+             speed,
           }
         : {
             dimmer: v.dimmer,
             mode: 'color_temperature',
             rgbColor: null,
-            colorTemperatureKelvin: v.colorTemperatureKelvin,
+             colorTemperatureKelvin: v.colorTemperatureKelvin,
+             fade,
+             speed,
           };
     this.pending.set(true);
     this.failure.set(null);
@@ -165,6 +181,8 @@ export class SettingsPageComponent {
       mode: v.mode,
       rgbColor: v.rgbColor ?? '#88C0D0',
       colorTemperatureKelvin: v.colorTemperatureKelvin ?? 3000,
+      fade: v.fade ?? null,
+      speed: v.speed ?? null,
     });
   }
   private focusFirstInvalid() {

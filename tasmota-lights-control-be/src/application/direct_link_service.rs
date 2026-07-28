@@ -21,7 +21,7 @@ pub struct DirectLinkService {
 impl DirectLinkService {
     pub async fn generate(&self, bulb_id: Uuid, profile_id: Uuid) -> AppResult<String> {
         let _ = &self.profiles;
-        let (bulb, profile) = self
+        let (bulb, profile, settings) = self
             .bulbs
             .db
             .run(move |connection| {
@@ -30,8 +30,9 @@ impl DirectLinkService {
                     .map_err(|_| AppError::Internal)?;
                 let bulb = bulb_repository::get(&transaction, bulb_id)?;
                 let profile = profile_repository::get(&transaction, profile_id)?;
+                let settings = crate::adapters::sqlite::settings_repository::get(&transaction)?;
                 transaction.commit().map_err(|_| AppError::Internal)?;
-                Ok((bulb, profile))
+                Ok((bulb, profile, settings))
             })
             .await?;
         let endpoint = self
@@ -42,6 +43,8 @@ impl DirectLinkService {
             &profile.mode,
             profile.rgb_color.as_deref(),
             profile.color_temperature_kelvin,
+            settings.fade,
+            settings.speed,
         );
         Ok(crate::adapters::tasmota::client::endpoint_url(&endpoint, &command)?.to_string())
     }

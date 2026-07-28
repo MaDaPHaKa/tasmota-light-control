@@ -51,8 +51,18 @@ pub enum Command {
     Status,
     Color,
     ColorTemperature,
-    ApplyRgb { dimmer: u8, color: String },
-    ApplyColorTemperature { dimmer: u8, ct: u16 },
+    ApplyRgb {
+        dimmer: u8,
+        color: String,
+        fade: Option<u8>,
+        speed: Option<u8>,
+    },
+    ApplyColorTemperature {
+        dimmer: u8,
+        ct: u16,
+        fade: Option<u8>,
+        speed: Option<u8>,
+    },
 }
 
 impl Command {
@@ -62,14 +72,33 @@ impl Command {
             Self::Status => "Status 11".into(),
             Self::Color => "Color".into(),
             Self::ColorTemperature => "CT".into(),
-            Self::ApplyRgb { dimmer, color } => {
-                format!("Backlog0 Power1 On; Dimmer {dimmer}; Color {color}")
-            }
-            Self::ApplyColorTemperature { dimmer, ct } => {
-                format!("Backlog0 Power1 On; Dimmer {dimmer}; CT {ct}")
-            }
+            Self::ApplyRgb {
+                dimmer,
+                color,
+                fade,
+                speed,
+            } => apply_text(format!("Color {color}"), *dimmer, *fade, *speed),
+            Self::ApplyColorTemperature {
+                dimmer,
+                ct,
+                fade,
+                speed,
+            } => apply_text(format!("CT {ct}"), *dimmer, *fade, *speed),
         }
     }
+}
+
+fn apply_text(value: String, dimmer: u8, fade: Option<u8>, speed: Option<u8>) -> String {
+    let mut commands = Vec::new();
+    if let Some(fade) = fade {
+        commands.push(format!("Fade {fade}"));
+    }
+    if let Some(speed) = speed {
+        commands.push(format!("Speed {speed}"));
+    }
+    commands.push(format!("Dimmer {dimmer}"));
+    commands.push(value);
+    format!("Backlog0 {}", commands.join("; "))
 }
 
 #[derive(Clone, Default)]
