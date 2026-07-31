@@ -55,7 +55,11 @@ impl StatusService {
                 Some("rgb") => {
                     profile.mode == "rgb"
                         && profile.dimmer == dimmer
-                        && profile.rgb_color == state.rgb_color
+                        && rgb_matches_dimmer_scaled_color(
+                            profile.rgb_color.as_deref(),
+                            state.rgb_color.as_deref(),
+                            dimmer,
+                        )
                 }
                 Some("color_temperature") => {
                     profile.mode == "color_temperature"
@@ -186,4 +190,67 @@ fn kelvin_to_ct(kelvin: u16) -> u16 {
 }
 fn ct_to_kelvin(ct: u16) -> u16 {
     ((1_000_000 + u32::from(ct) / 2) / u32::from(ct)) as u16
+}
+
+fn rgb_matches_dimmer_scaled_color(
+    profile_color: Option<&str>,
+    device_color: Option<&str>,
+    dimmer: u8,
+) -> bool {
+    let (Some(profile), Some(device)) = (parse_rgb(profile_color), parse_rgb(device_color)) else {
+        return false;
+    };
+    let dimmer = u16::from(dimmer);
+    profile
+        .into_iter()
+        .zip(device)
+        .all(|(profile_channel, device_channel)| {
+            let expected = (u16::from(profile_channel) * dimmer + 50) / 100;
+            expected.abs_diff(u16::from(device_channel)) <= 2
+        })
+}
+
+fn parse_rgb(value: Option<&str>) -> Option<[u8; 3]> {
+    let value = value?.strip_prefix('#')?;
+    (value.len() == 6)
+        .then(|| {
+            Some([
+                u8::from_str_radix(&value[0..2], 16).ok()?,
+                u8::from_str_radix(&value[2..4], 16).ok()?,
+                u8::from_str_radix(&value[4..6], 16).ok()?,
+            ])
+        })
+        .flatten()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::rgb_matches_dimmer_scaled_color;
+
+    #[test]
+    fn rgb_profile_matches_device_color_scaled_by_dimmer() {
+        assert!(rgb_matches_dimmer_scaled_color(
+            Some("#FF8000"),
+            Some("#663300"),
+            40,
+        ));
+    }
+
+    #[test]
+    fn rgb_profile_rejects_different_color_after_scaling() {
+        assert!(!rgb_matches_dimmer_scaled_color(
+            Some("#FF8000"),
+            Some("#660040"),
+            40,
+        ));
+    }
+
+    #[test]
+    fn rgb_profile_accepts_rounding_difference() {
+        assert!(rgb_matches_dimmer_scaled_color(
+            Some("#123456"),
+            Some("#071521"),
+            40,
+        ));
+    }
 }
