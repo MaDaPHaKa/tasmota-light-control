@@ -18,7 +18,17 @@
 }
 .result {
   margin-top: 14px;
-}
-.result input {
-  min-width: 260px;
+  display: flex;
+  flex-direction: row;
+  gap: 0.15em;
+  mat-form-field {
+    flex-grow: 1;
+    input {
+      min-width: 260px;
+      width: 100%;
+    }
+  }
+  button {
+    align-self: center;
+  }
 }
