@@ -51,15 +51,10 @@ pub enum Command {
     Status,
     Color,
     ColorTemperature,
-    ApplyRgb {
-        dimmer: u8,
-        color: String,
-        fade: Option<u8>,
-        speed: Option<u8>,
-    },
-    ApplyColorTemperature {
-        dimmer: u8,
-        ct: u16,
+    ApplyProperties {
+        dimmer: Option<u8>,
+        color: Option<String>,
+        ct: Option<u16>,
         fade: Option<u8>,
         speed: Option<u8>,
     },
@@ -72,33 +67,33 @@ impl Command {
             Self::Status => "Status 11".into(),
             Self::Color => "Color".into(),
             Self::ColorTemperature => "CT".into(),
-            Self::ApplyRgb {
+            Self::ApplyProperties {
                 dimmer,
                 color,
-                fade,
-                speed,
-            } => apply_text(format!("Color {color}"), *dimmer, *fade, *speed),
-            Self::ApplyColorTemperature {
-                dimmer,
                 ct,
                 fade,
                 speed,
-            } => apply_text(format!("CT {ct}"), *dimmer, *fade, *speed),
+            } => {
+                let mut commands = Vec::new();
+                if let Some(fade) = fade {
+                    commands.push(format!("Fade {fade}"));
+                }
+                if let Some(speed) = speed {
+                    commands.push(format!("Speed {speed}"));
+                }
+                if let Some(color) = color {
+                    commands.push(format!("Color {color}"));
+                }
+                if let Some(ct) = ct {
+                    commands.push(format!("CT {ct}"));
+                }
+                if let Some(dimmer) = dimmer {
+                    commands.push(format!("Dimmer {dimmer}"));
+                }
+                format!("Backlog0 {}", commands.join("; "))
+            }
         }
     }
-}
-
-fn apply_text(value: String, dimmer: u8, fade: Option<u8>, speed: Option<u8>) -> String {
-    let mut commands = Vec::new();
-    if let Some(fade) = fade {
-        commands.push(format!("Fade {fade}"));
-    }
-    if let Some(speed) = speed {
-        commands.push(format!("Speed {speed}"));
-    }
-    commands.push(value);
-    commands.push(format!("Dimmer {dimmer}"));
-    format!("Backlog0 {}", commands.join("; "))
 }
 
 #[derive(Clone, Default)]

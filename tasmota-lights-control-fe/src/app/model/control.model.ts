@@ -6,6 +6,12 @@ export interface ApplyProfileRequest {
 export interface ResetBulbsRequest {
   bulbIds: Uuid[];
 }
+export interface SetPropertiesRequest {
+  bulbIds: Uuid[];
+  dimmer?: number;
+  rgbColor?: string;
+  colorTemperatureKelvin?: number;
+}
 export interface DirectLinkRequest {
   bulbId: Uuid;
   profileId: Uuid;

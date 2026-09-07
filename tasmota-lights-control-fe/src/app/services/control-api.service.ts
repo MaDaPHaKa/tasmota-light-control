@@ -5,6 +5,7 @@ import {
   ControlOperationResult,
   DirectLinkRequest,
   ResetBulbsRequest,
+  SetPropertiesRequest,
 } from '@model/control.model';
 import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
@@ -19,6 +20,9 @@ export class ControlApiService {
   }
   resetAll() {
     return this.http.post<ControlOperationResult>(`${this.base}/actions/reset-all`, null);
+  }
+  setProperties(request: SetPropertiesRequest) {
+    return this.http.post<ControlOperationResult>(`${this.base}/actions/set-properties`, request);
   }
   generateDirectLink(request: DirectLinkRequest) {
     return this.http.post(`${this.base}/direct-links`, request, { responseType: 'text' });

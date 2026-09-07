@@ -1,7 +1,7 @@
 use crate::{
     adapters::{
         sqlite::{bulb_repository, profile_repository, settings_repository},
-        tasmota::command::command,
+        tasmota::command,
     },
     application::{
         bulb_service::BulbService, profile_service::ProfileService,
@@ -161,9 +161,9 @@ impl ControlService {
                 Ok((profile, settings, bulbs))
             })
             .await?;
-        let command = command(
-            profile.dimmer,
-            &profile.mode,
+        let command = command::properties(
+            Some(profile.dimmer),
+            Some(&profile.mode),
             profile.rgb_color.as_deref(),
             profile.color_temperature_kelvin,
             settings.fade,
@@ -199,9 +199,9 @@ impl ControlService {
                 Ok((settings, bulbs))
             })
             .await?;
-        let command = command(
-            settings.dimmer,
-            &settings.mode,
+        let command = command::properties(
+            Some(settings.dimmer),
+            Some(&settings.mode),
             settings.rgb_color.0.as_deref(),
             settings.color_temperature_kelvin.0,
             settings.fade,
@@ -229,14 +229,51 @@ impl ControlService {
                 Ok((settings, bulbs))
             })
             .await?;
-        let command = command(
-            settings.dimmer,
-            &settings.mode,
+        let command = command::properties(
+            Some(settings.dimmer),
+            Some(&settings.mode),
             settings.rgb_color.0.as_deref(),
             settings.color_temperature_kelvin.0,
             settings.fade,
             settings.speed,
         );
         Ok(self.execute("reset_all", None, bulbs, command).await)
+    }
+
+    pub async fn set_properties(
+        &self,
+        ids: Vec<Uuid>,
+        dimmer: Option<i64>,
+        rgb_color: Option<String>,
+        color_temperature_kelvin: Option<i64>,
+    ) -> AppResult<Operation> {
+        Self::validate_ids(&ids)?;
+        let _permit = self
+            .admission
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| AppError::TooMany)?;
+        let (dimmer, rgb_color, color_temperature_kelvin) =
+            crate::domain::validation::properties(dimmer, rgb_color, color_temperature_kelvin)?;
+        let snapshot_ids = ids;
+        let bulbs = self
+            .bulbs
+            .db
+            .run(move |connection| {
+                snapshot_ids
+                    .iter()
+                    .map(|id| bulb_repository::get(connection, *id))
+                    .collect::<AppResult<Vec<_>>>()
+            })
+            .await?;
+        let command = crate::adapters::tasmota::command::properties(
+            dimmer,
+            None,
+            rgb_color.as_deref(),
+            color_temperature_kelvin,
+            None,
+            None,
+        );
+        Ok(self.execute("set_properties", None, bulbs, command).await)
     }
 }

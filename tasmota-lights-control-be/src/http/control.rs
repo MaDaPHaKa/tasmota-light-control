@@ -1,5 +1,5 @@
 use crate::{
-    domain::control::{Apply, Ids, Operation},
+    domain::control::{Apply, Ids, Operation, SetProperties},
     error::{ApiJson, AppResult},
     http::dto::AppState,
 };
@@ -23,4 +23,20 @@ pub async fn reset(
 }
 pub async fn reset_all(State(state): State<AppState>) -> AppResult<Json<Operation>> {
     Ok(Json(state.control.reset_all().await?))
+}
+pub async fn set_properties(
+    State(state): State<AppState>,
+    ApiJson(input): ApiJson<SetProperties>,
+) -> AppResult<Json<Operation>> {
+    Ok(Json(
+        state
+            .control
+            .set_properties(
+                input.bulb_ids,
+                input.dimmer,
+                input.rgb_color,
+                input.color_temperature_kelvin,
+            )
+            .await?,
+    ))
 }

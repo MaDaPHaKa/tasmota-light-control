@@ -36,6 +36,17 @@
     </button>
   </section>
   <section class="panel reset">
+    <div class="dimmer-settings">
+    <h2>Set dimmer</h2>
+    <mat-form-field appearance="outline">
+      <mat-label>Dimmer (1–100)</mat-label>
+      <input matInput type="number" min="1" max="100" [value]="dimmer()" (input)="dimmer.set(+$any($event.target).value)" />
+    </mat-form-field>
+    <button mat-flat-button color="primary" [disabled]="!selectedBulbs().size || pending() || dimmer() < 1 || dimmer() > 100" (click)="setDimmer()">
+      {{ pending() ? 'Working…' : 'Set dimmer' }}
+    </button>
+    </div>
+    <div>
     <h2>Reset bulbs</h2>
     <p>Restore configured defaults.</p>
     <button mat-stroked-button [disabled]="!selectedBulbs().size || pending()" (click)="reset()">
@@ -55,6 +66,7 @@
             ')'
       }}
     </button>
+    </div>
   </section>
 </div>
 <section class="panel links">

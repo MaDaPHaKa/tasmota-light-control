@@ -1,7 +1,7 @@
 use crate::{
     adapters::{
         sqlite::{bulb_repository, profile_repository},
-        tasmota::command::command,
+        tasmota::command,
     },
     application::{bulb_service::BulbService, profile_service::ProfileService},
     error::{AppError, AppResult},
@@ -38,9 +38,9 @@ impl DirectLinkService {
         let endpoint = self
             .policy
             .endpoint(&bulb.ip_address, i64::from(bulb.port))?;
-        let command = command(
-            profile.dimmer,
-            &profile.mode,
+        let command = command::properties(
+            Some(profile.dimmer),
+            Some(&profile.mode),
             profile.rgb_color.as_deref(),
             profile.color_temperature_kelvin,
             settings.fade,

@@ -35,6 +35,7 @@ pub fn router(state: AppState, body_limit: usize) -> Router {
         .route("/actions/apply-profile", post(control::apply))
         .route("/actions/reset", post(control::reset))
         .route("/actions/reset-all", post(control::reset_all))
+        .route("/actions/set-properties", post(control::set_properties))
         .route("/direct-links", post(direct_links::generate))
         .route("/settings/reset", get(settings::get).put(settings::put))
         .route("/health/live", get(health::live))

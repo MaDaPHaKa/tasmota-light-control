@@ -6,6 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { AppStoreService } from '@services/app-store.service';
 import { ControlApiService } from '@services/control-api.service';
@@ -29,6 +30,7 @@ import { PageHeader } from '@components/shared/page-header/page-header.component
     MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatSelectModule,
     DirectLinkComponent,
     PageHeader,
@@ -48,6 +50,7 @@ export class ControlPageComponent {
   protected readonly selectedProfile = signal<Uuid>('');
   protected readonly selectedBulbs = signal(new Set<Uuid>());
   protected readonly pending = signal(false);
+  protected readonly dimmer = signal(100);
   protected chooseProfile(id: Uuid) {
     this.selectedProfile.set(id);
   }
@@ -74,6 +77,11 @@ export class ControlPageComponent {
     const bulbIds = [...this.selectedBulbs()];
     if (!bulbIds.length || this.pending()) return;
     this.execute(this.api.reset({ bulbIds }));
+  }
+  protected setDimmer() {
+    const bulbIds = [...this.selectedBulbs()];
+    if (!bulbIds.length || this.pending()) return;
+    this.execute(this.api.setProperties({ bulbIds, dimmer: this.dimmer() }));
   }
   protected resetAll() {
     if (!this.bulbs().length || this.pending()) return;

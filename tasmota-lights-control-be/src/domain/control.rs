@@ -7,6 +7,14 @@ pub struct Ids {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SetProperties {
+    pub bulb_ids: Vec<Uuid>,
+    pub dimmer: Option<i64>,
+    pub rgb_color: Option<String>,
+    pub color_temperature_kelvin: Option<i64>,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Apply {
     pub profile_id: Uuid,
     pub bulb_ids: Vec<Uuid>,

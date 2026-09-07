@@ -20,24 +20,53 @@ pub type ValidSettings = (
     Option<u8>,
     Option<u8>,
 );
+pub type ValidProperties = (Option<u8>, Option<String>, Option<u16>);
+
+fn validate_property_values(
+    fields: &mut BTreeMap<String, String>,
+    dimmer: Option<i64>,
+    rgb: Option<&str>,
+    kelvin: Option<i64>,
+) -> ValidProperties {
+    if dimmer.is_some_and(|value| !(1..=100).contains(&value)) {
+        fields.insert("dimmer".into(), "Dimmer must be between 1 and 100".into());
+    }
+    if rgb.is_some_and(|value| {
+        value.len() != 7
+            || !value.starts_with('#')
+            || !value[1..].bytes().all(|byte| byte.is_ascii_hexdigit())
+    }) {
+        fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
+    }
+    if kelvin.is_some_and(|value| !(2000..=6000).contains(&value)) {
+        fields.insert(
+            "colorTemperatureKelvin".into(),
+            "Color temperature must be between 2000 and 6000".into(),
+        );
+    }
+    (
+        dimmer.and_then(|value| u8::try_from(value).ok()),
+        rgb.map(str::to_uppercase),
+        kelvin.and_then(|value| u16::try_from(value).ok()),
+    )
+}
+
 pub fn light(input: LightInput) -> AppResult<ValidLight> {
     let mut fields = BTreeMap::new();
     let display_name = input.name.trim().to_owned();
     if display_name.is_empty() || display_name.chars().count() > 80 {
         fields.insert("name".into(), "Name must contain 1 to 80 characters".into());
     }
-    if !(1..=100).contains(&input.dimmer) {
-        fields.insert("dimmer".into(), "Dimmer must be between 1 and 100".into());
-    }
     let rgb = input.rgb_color.0.map(|value| value.to_uppercase());
-    let valid_rgb = |value: &str| {
-        value.len() == 7
-            && value.starts_with('#')
-            && value[1..].bytes().all(|byte| byte.is_ascii_hexdigit())
-    };
+    let (_, _, _) = validate_property_values(
+        &mut fields,
+        Some(input.dimmer),
+        rgb.as_deref(),
+        input.color_temperature_kelvin.0,
+    );
     match input.mode.as_str() {
         "rgb" => {
-            if !rgb.as_deref().is_some_and(valid_rgb) {
+            if rgb.is_none() {
                 fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
             }
             if input.color_temperature_kelvin.0.is_some() {
@@ -54,11 +83,7 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
                     "Color temperature mode requires null RGB color".into(),
                 );
             }
-            if !input
-                .color_temperature_kelvin
-                .0
-                .is_some_and(|value| (2000..=6000).contains(&value))
-            {
+            if input.color_temperature_kelvin.0.is_none() {
                 fields.insert(
                     "colorTemperatureKelvin".into(),
                     "Color temperature must be between 2000 and 6000".into(),
@@ -126,6 +151,31 @@ pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
             .transpose()
             .map_err(|_| AppError::Internal)?,
     ))
+}
+
+pub fn properties(
+    dimmer: Option<i64>,
+    rgb_color: Option<String>,
+    color_temperature_kelvin: Option<i64>,
+) -> AppResult<(Option<u8>, Option<String>, Option<u16>)> {
+    let mut fields = BTreeMap::new();
+    if dimmer.is_none() && rgb_color.is_none() && color_temperature_kelvin.is_none() {
+        fields.insert(
+            "properties".into(),
+            "At least one property is required".into(),
+        );
+    }
+    let rgb = rgb_color.map(|value| value.to_uppercase());
+    let (dimmer_value, rgb_value, kelvin_value) = validate_property_values(
+        &mut fields,
+        dimmer,
+        rgb.as_deref(),
+        color_temperature_kelvin,
+    );
+    if !fields.is_empty() {
+        return Err(AppError::Validation(fields));
+    }
+    Ok((dimmer_value, rgb_value, kelvin_value))
 }
 pub fn now() -> String {
     OffsetDateTime::now_utc()
