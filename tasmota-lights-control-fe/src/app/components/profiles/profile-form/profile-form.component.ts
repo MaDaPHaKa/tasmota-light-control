@@ -23,6 +23,7 @@ import {
 } from '@functions/validators.function';
 import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
 import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
+import { rgbcctHex } from '@functions/light-color.function';
 
 type ProfileField = 'name' | 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin';
 
@@ -52,7 +53,7 @@ export class ProfileFormComponent {
   readonly model = signal({
     name: '',
     dimmer: 100,
-    mode: 'rgb' as 'rgb' | 'color_temperature',
+    mode: 'rgb' as 'rgb' | 'color_temperature' | 'mixed',
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
   });
@@ -66,11 +67,11 @@ export class ProfileFormComponent {
     validate(p.mode, () => this.serverValidation('mode'));
     validate(p.rgbColor, ({ value }) =>
       this.serverValidation('rgbColor') ??
-        (this.model().mode === 'rgb' ? validateUppercaseRgbHex(value()) : undefined),
+        (this.model().mode !== 'color_temperature' ? validateUppercaseRgbHex(value()) : undefined),
     );
     validate(p.colorTemperatureKelvin, ({ value }) =>
       this.serverValidation('colorTemperatureKelvin') ??
-        (this.model().mode === 'color_temperature'
+          (this.model().mode !== 'rgb'
           ? validateIntegerRange(value(), 2000, 6000)
           : undefined),
     );
@@ -114,19 +115,32 @@ export class ProfileFormComponent {
             rgbColor: v.rgbColor.toUpperCase(),
             colorTemperatureKelvin: null,
           }
-        : {
+        : v.mode === 'color_temperature'
+          ? {
             name: v.name.trim(),
             dimmer: v.dimmer,
             mode: 'color_temperature',
             rgbColor: null,
             colorTemperatureKelvin: v.colorTemperatureKelvin,
-          },
+            }
+          : {
+              name: v.name.trim(),
+              dimmer: v.dimmer,
+              mode: 'mixed',
+              rgbColor: v.rgbColor.toUpperCase(),
+              colorTemperatureKelvin: v.colorTemperatureKelvin,
+            },
     );
   }
   protected updateRgbColor(value: string) {
     this.model.update((current) => ({ ...current, rgbColor: value }));
     this.profileForm.rgbColor().markAsTouched();
     this.changed('rgbColor');
+  }
+  protected colorPreview() {
+    return this.model().mode === 'mixed'
+      ? rgbcctHex(this.model().rgbColor, this.model().colorTemperatureKelvin)
+      : this.model().rgbColor;
   }
   protected changed(field: ProfileField) {
     this.fieldChanged.emit(field);
@@ -151,7 +165,7 @@ export class ProfileFormComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode === 'rgb' && this.profileForm.rgbColor().invalid())
+    if (this.model().mode !== 'color_temperature' && this.profileForm.rgbColor().invalid())
       this.colorPicker()?.focus();
   }
 }

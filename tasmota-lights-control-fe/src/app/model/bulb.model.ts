@@ -4,7 +4,7 @@ export type TasmotaResultCode =
   'success' | 'timeout' | 'unreachable' | 'invalid_response' | 'device_error' | 'http_error';
 export type Reachability =
   'reachable' | 'unreachable' | 'timeout' | 'invalid_response' | 'device_error';
-export type LightMode = 'rgb' | 'color_temperature';
+export type LightMode = 'rgb' | 'color_temperature' | 'mixed';
 export interface Bulb {
   id: Uuid;
   name: string;

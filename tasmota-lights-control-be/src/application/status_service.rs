@@ -212,7 +212,7 @@ fn rgb_matches_dimmer_scaled_color(
 
 fn parse_rgb(value: Option<&str>) -> Option<[u8; 3]> {
     let value = value?.strip_prefix('#')?;
-    (value.len() == 6)
+    (value.len() == 6 || value.len() == 10)
         .then(|| {
             Some([
                 u8::from_str_radix(&value[0..2], 16).ok()?,

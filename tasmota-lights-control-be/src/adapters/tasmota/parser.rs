@@ -36,6 +36,7 @@ pub fn status(value: &Value) -> DeviceState {
         .map(|value| value as u16);
     let explicit = text(status, &["Mode", "ColorMode", "LightMode"]).and_then(mode);
     state.mode = explicit.or_else(|| match (&state.rgb_color, state.ct) {
+        (Some(color), _) if color.len() == 11 => Some("mixed".into()),
         (Some(color), _) if color != "#000000" => Some("rgb".into()),
         (_, Some(_)) => Some("color_temperature".into()),
         _ => None,
@@ -115,13 +116,14 @@ fn power(value: &str) -> Option<String> {
 
 fn color(value: &str) -> Option<String> {
     let value = value.trim().strip_prefix('#').unwrap_or(value.trim());
-    (value.len() >= 6 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
-        .then(|| format!("#{}", value[..6].to_ascii_uppercase()))
+    ((value.len() == 6 || value.len() == 10) && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| format!("#{}", value.to_ascii_uppercase()))
 }
 
 fn mode(value: &str) -> Option<String> {
     match value.to_ascii_lowercase().as_str() {
         "rgb" | "color" => Some("rgb".into()),
+        "mixed" | "rgbcct" => Some("mixed".into()),
         "ct" | "color_temperature" | "temperature" => Some("color_temperature".into()),
         _ => None,
     }
@@ -159,8 +161,8 @@ mod tests {
             }
         }));
 
-        assert_eq!(state.mode, Some("rgb".into()));
-        assert_eq!(state.rgb_color, Some("#E38C52".into()));
+        assert_eq!(state.mode, Some("mixed".into()));
+        assert_eq!(state.rgb_color, Some("#E38C520000".into()));
         assert_eq!(state.ct, Some(500));
     }
 }

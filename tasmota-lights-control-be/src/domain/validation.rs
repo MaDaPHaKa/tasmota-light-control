@@ -90,10 +90,21 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
                 );
             }
         }
+        "mixed" => {
+            if rgb.is_none() {
+                fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
+            }
+            if input.color_temperature_kelvin.0.is_none() {
+                fields.insert(
+                    "colorTemperatureKelvin".into(),
+                    "Color temperature must be between 2000 and 6000".into(),
+                );
+            }
+        }
         _ => {
             fields.insert(
                 "mode".into(),
-                "Mode must be rgb or color_temperature".into(),
+                "Mode must be rgb, color_temperature, or mixed".into(),
             );
         }
     }

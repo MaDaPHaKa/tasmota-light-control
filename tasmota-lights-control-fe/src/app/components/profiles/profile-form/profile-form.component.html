@@ -24,15 +24,15 @@
     <legend>Mode</legend>
     <mat-radio-group #formControl [formField]="profileForm.mode" (change)="changed('mode')"
       ><mat-radio-button value="rgb">RGB</mat-radio-button
-      ><mat-radio-button value="color_temperature"
-        >Color temperature</mat-radio-button
+      ><mat-radio-button value="color_temperature">Color temperature</mat-radio-button
+      ><mat-radio-button value="mixed">RGB + CCT</mat-radio-button
       ></mat-radio-group
     >
     @if (showClientError('mode')) {
       <p class="field-error">{{ clientError('mode') }}</p>
     }
   </fieldset>
-  @if (model().mode === 'rgb') {
+  @if (model().mode !== 'color_temperature') {
     <app-rgb-color-picker
       [value]="model().rgbColor"
       (valueChange)="updateRgbColor($event)"
@@ -40,7 +40,8 @@
       [hideSwatch]="true"
       [errorMessage]="showClientError('rgbColor') ? clientError('rgbColor') : null"
     />
-  } @else {
+  }
+  @if (model().mode !== 'rgb') {
     <mat-form-field appearance="outline"
       ><mat-label>Kelvin</mat-label
       ><input
@@ -56,8 +57,8 @@
     </mat-form-field>
   }
   <app-mode-preview
-    [color]="model().rgbColor"
-    [text]="model().mode === 'rgb' ? model().rgbColor : model().colorTemperatureKelvin + ' K'"
+    [color]="colorPreview()"
+    [text]="colorPreview()"
     [dimmer]="model().dimmer"
   />
   <div class="actions">

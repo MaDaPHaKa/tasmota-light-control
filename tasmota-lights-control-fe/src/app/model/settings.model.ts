@@ -1,4 +1,12 @@
-export type ResetSettings = RgbResetSettings | ColorTemperatureResetSettings;
+export interface MixedResetSettings {
+  dimmer: number;
+  mode: 'mixed';
+  rgbColor: string;
+  colorTemperatureKelvin: number;
+  fade: number | null;
+  speed: number | null;
+}
+export type ResetSettings = RgbResetSettings | ColorTemperatureResetSettings | MixedResetSettings;
 export interface RgbResetSettings {
   dimmer: number;
   mode: 'rgb';

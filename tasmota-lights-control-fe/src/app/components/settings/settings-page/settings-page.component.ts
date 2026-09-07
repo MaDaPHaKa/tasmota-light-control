@@ -21,6 +21,7 @@ import { validateIntegerRange, validateUppercaseRgbHex } from '@functions/valida
 import { SettingsApiService } from '@services/settings-api.service';
 import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
 import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
+import { rgbcctHex } from '@functions/light-color.function';
 import { SnackbarService } from '@services/snackbar.service';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
 
@@ -49,7 +50,7 @@ export class SettingsPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly model = signal({
     dimmer: 100,
-    mode: 'color_temperature' as 'rgb' | 'color_temperature',
+    mode: 'color_temperature' as 'rgb' | 'color_temperature' | 'mixed',
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
     fade: 1 as number | null,
@@ -69,7 +70,7 @@ export class SettingsPageComponent {
     );
     validate(p.colorTemperatureKelvin, ({ value }) =>
       this.serverValidation('colorTemperatureKelvin') ??
-        (this.model().mode === 'color_temperature'
+        (this.model().mode !== 'rgb'
           ? validateIntegerRange(value(), 2000, 6000)
           : undefined),
     );
@@ -105,6 +106,11 @@ export class SettingsPageComponent {
     this.model.update((current) => ({ ...current, rgbColor: value }));
     this.settingsForm.rgbColor().markAsTouched();
     this.changed('rgbColor');
+  }
+  protected colorPreview() {
+    return this.model().mode === 'mixed'
+      ? rgbcctHex(this.model().rgbColor, this.model().colorTemperatureKelvin)
+      : this.model().rgbColor;
   }
   protected changed(field: SettingsField) {
     this.failure.update((f) =>
@@ -148,14 +154,23 @@ export class SettingsPageComponent {
              fade,
              speed,
           }
-        : {
+        : v.mode === 'color_temperature'
+          ? {
             dimmer: v.dimmer,
             mode: 'color_temperature',
             rgbColor: null,
-             colorTemperatureKelvin: v.colorTemperatureKelvin,
-             fade,
-             speed,
-          };
+            colorTemperatureKelvin: v.colorTemperatureKelvin,
+            fade,
+            speed,
+            }
+          : {
+              dimmer: v.dimmer,
+              mode: 'mixed',
+              rgbColor: v.rgbColor.toUpperCase(),
+              colorTemperatureKelvin: v.colorTemperatureKelvin,
+              fade,
+              speed,
+            };
     this.pending.set(true);
     this.failure.set(null);
     this.api
@@ -193,7 +208,7 @@ export class SettingsPageComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode === 'rgb' && this.settingsForm.rgbColor().invalid())
+    if (this.model().mode !== 'color_temperature' && this.settingsForm.rgbColor().invalid())
       this.colorPicker()?.focus();
   }
 }
