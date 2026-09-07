@@ -129,3 +129,23 @@ section.panel.links {
 .reset button {
   margin-top: 10px;
 }
+
+.dimmer-settings {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 6px 0 4px;
+}
+
+app-rgb-color-picker {
+  margin-top: 4px;
+}
+
+app-mode-preview {
+  margin-top: 10px;
+}

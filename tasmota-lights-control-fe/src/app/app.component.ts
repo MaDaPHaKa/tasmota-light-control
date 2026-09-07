@@ -8,17 +8,16 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AppStoreService } from '@services/app-store.service';
 import { SnackbarService } from '@services/snackbar.service';
+import { SidebarComponent } from '@components/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, MatButtonModule],
+  imports: [RouterOutlet, SidebarComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,13 +27,12 @@ export class AppComponent {
   private readonly store = inject(AppStoreService);
   private readonly snackbar = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly menuOpen = signal(false);
   protected readonly bulbs = this.store.bulbs;
   protected readonly startupError = this.store.startupError;
   protected readonly routePath = signal(this.router.url);
   protected readonly routeTitle = computed(
     () =>
-      ({ bulbs: 'Bulbs', profiles: 'Profiles', control: 'Control', settings: 'Settings' })[
+      ({ bulbs: 'Bulbs', profiles: 'Profiles', control: 'Control', 'direct-link': 'Direct link', settings: 'Settings' })[
         this.routePath().split('/')[1]
       ] ?? 'Not found',
   );

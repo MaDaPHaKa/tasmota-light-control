@@ -23,6 +23,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'direct-link',
+    loadComponent: () =>
+      import('./components/control/direct-link/direct-link.component').then(
+        (m) => m.DirectLinkComponent,
+      ),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./components/settings/settings-page/settings-page.component').then(

@@ -1,7 +1,7 @@
 <app-page-header
   sectionEyebrow="ACTIONS"
   sectionName="Control"
-  sectionDescription="Apply profiles or restore defaults across your bulbs."
+  sectionDescription="Apply profiles, set color and dimmer, or restore defaults across your bulbs."
 />
 <div class="control-layout">
   <section class="panel">
@@ -35,41 +35,57 @@
       <mat-icon>bolt</mat-icon>{{ pending() ? 'Working…' : 'Apply profile' }}
     </button>
   </section>
-  <section class="panel reset">
+  <section class="panel dimmer">
     <div class="dimmer-settings">
-    <h2>Set dimmer</h2>
-    <mat-form-field appearance="outline">
-      <mat-label>Dimmer (1–100)</mat-label>
-      <input matInput type="number" min="1" max="100" [value]="dimmer()" (input)="dimmer.set(+$any($event.target).value)" />
-    </mat-form-field>
-    <button mat-flat-button color="primary" [disabled]="!selectedBulbs().size || pending() || dimmer() < 1 || dimmer() > 100" (click)="setDimmer()">
-      {{ pending() ? 'Working…' : 'Set dimmer' }}
-    </button>
-    </div>
-    <div>
-    <h2>Reset bulbs</h2>
-    <p>Restore configured defaults.</p>
-    <button mat-stroked-button [disabled]="!selectedBulbs().size || pending()" (click)="reset()">
-      {{ pending() ? 'Working…' : 'Reset selected' }}</button
-    ><button
-      mat-flat-button
-      color="warn"
-      [disabled]="!bulbs().length || pending()"
-      (click)="resetAll()"
-    >
-      {{
-        pending()
-          ? 'Working…'
-          : 'Reset all bulbs
-            (' +
-            bulbs().length +
-            ')'
-      }}
-    </button>
+      <h2>Set dimmer & color</h2>
+      <mat-form-field appearance="outline">
+        <mat-label>Dimmer (1–100)</mat-label>
+        <input matInput type="number" min="1" max="100" [value]="dimmer()" (input)="dimmer.set(+$any($event.target).value)" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" [disabled]="!applyValid()" (click)="setProperties()">
+        <mat-icon>monitor_lighting</mat-icon>{{ pending() ? 'Working…' : 'Apply' }}
+      </button>
+      <fieldset>
+        <legend>Mode</legend>
+        <mat-radio-group [value]="mode()" (change)="mode.set($event.value)">
+          <mat-radio-button value="rgb">RGB</mat-radio-button>
+          <mat-radio-button value="color_temperature">Color temperature</mat-radio-button>
+          <mat-radio-button value="mixed">RGB + CCT</mat-radio-button>
+        </mat-radio-group>
+      </fieldset>
+      @if (mode() !== 'color_temperature') {
+        <app-rgb-color-picker
+          [value]="rgbColor()"
+          (valueChange)="rgbColor.set($event)"
+          [disabled]="pending()"
+          [hideSwatch]="true"
+        />
+      }
+      @if (mode() !== 'rgb') {
+        <mat-form-field appearance="outline">
+          <mat-label>Kelvin (2000–6000)</mat-label>
+          <input matInput type="number" min="2000" max="6000" [value]="colorTemperatureKelvin()" (input)="colorTemperatureKelvin.set(+$any($event.target).value)" />
+        </mat-form-field>
+      }
+      <app-mode-preview [color]="colorPreview()" [text]="colorPreview()" [dimmer]="dimmer()" />
     </div>
   </section>
 </div>
-<section class="panel links">
-  <h2>Direct link</h2>
-  <app-direct-link [bulbs]="bulbs()" [profiles]="profiles()" />
+<section class="panel reset">
+  <h2>Reset bulbs</h2>
+  <p>Restore configured defaults.</p>
+  <button mat-stroked-button [disabled]="!selectedBulbs().size || pending()" (click)="reset()">
+    {{ pending() ? 'Working…' : 'Reset selected' }}</button
+  ><button
+    mat-flat-button
+    color="warn"
+    [disabled]="!bulbs().length || pending()"
+    (click)="resetAll()"
+  >
+    {{
+      pending()
+        ? 'Working…'
+        : 'Reset all bulbs (' + bulbs().length + ')'
+    }}
+  </button>
 </section>

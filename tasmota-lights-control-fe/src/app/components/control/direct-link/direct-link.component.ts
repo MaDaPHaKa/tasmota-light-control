@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  input,
   signal,
   inject,
 } from '@angular/core';
@@ -13,11 +12,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Bulb, Uuid } from '@model/bulb.model';
-import { LightProfile } from '@model/profile.model';
+import { Uuid } from '@model/bulb.model';
 import { ApiFailure } from '@model/api-error.model';
 import { ControlApiService } from '@services/control-api.service';
 import { SnackbarService } from '@services/snackbar.service';
+import { AppStoreService } from '@services/app-store.service';
 @Component({
   selector: 'app-direct-link',
   standalone: true,
@@ -27,16 +26,17 @@ import { SnackbarService } from '@services/snackbar.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectLinkComponent {
-  readonly bulbs = input<readonly Bulb[]>([]);
-  readonly profiles = input<readonly LightProfile[]>([]);
-  protected readonly bulbId = signal<Uuid>('');
-  protected readonly profileId = signal<Uuid>('');
-  protected readonly url = signal('');
-  protected readonly pending = signal(false);
+  private readonly store = inject(AppStoreService);
+  readonly bulbs = this.store.bulbs;
+  readonly profiles = this.store.profiles;
   private readonly api = inject(ControlApiService);
   private readonly clipboard = inject(Clipboard);
   private readonly snackbar = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly bulbId = signal<Uuid>('');
+  protected readonly profileId = signal<Uuid>('');
+  protected readonly url = signal('');
+  protected readonly pending = signal(false);
   protected selectBulb(value: Uuid) {
     this.bulbId.set(value);
     this.clearResult();
