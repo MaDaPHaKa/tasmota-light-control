@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.profile-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 24px;
+  align-items: end;
+  min-width: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.profile-control__header {
+  grid-column: 1 / -1;
+}
+
+h2 {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.profile-control__select {
+  min-width: 0;
+}
+
+.profile-control__submit {
+  min-height: 56px;
+  margin-bottom: 1.25em;
+}
+
+button mat-icon {
+  margin-right: 6px;
+}
+
+@media (max-width: 600px) {
+  .profile-control {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-control__submit {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}

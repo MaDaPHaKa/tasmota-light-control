@@ -6,14 +6,12 @@ import {
   input,
   output,
   signal,
-  viewChild,
   viewChildren,
 } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
 import { ApiFailure } from '@model/api-error.model';
 import { LightProfile, LightProfileInput } from '@model/profile.model';
 import {
@@ -21,9 +19,7 @@ import {
   validateTrimmedRequired,
   validateUppercaseRgbHex,
 } from '@functions/validators.function';
-import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
-import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
-import { rgbcctHex } from '@functions/light-color.function';
+import { EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
 
 type ProfileField = 'name' | 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin';
 
@@ -35,9 +31,7 @@ type ProfileField = 'name' | 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureK
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatRadioModule,
-    RgbColorPickerComponent,
-    ModePreviewComponent,
+    LightConfigurationComponent,
   ],
   templateUrl: './profile-form.component.html',
   styleUrl: './profile-form.component.scss',
@@ -58,7 +52,6 @@ export class ProfileFormComponent {
     colorTemperatureKelvin: 3000,
   });
   readonly controls = viewChildren<ElementRef<HTMLElement>>('formControl');
-  private readonly colorPicker = viewChild(RgbColorPickerComponent);
   readonly profileForm = form(this.model, (p) => {
     required(p.name, { message: 'Name is required' });
     required(p.dimmer, { message: 'Dimmer is required' });
@@ -132,15 +125,12 @@ export class ProfileFormComponent {
             },
     );
   }
-  protected updateRgbColor(value: string) {
-    this.model.update((current) => ({ ...current, rgbColor: value }));
-    this.profileForm.rgbColor().markAsTouched();
-    this.changed('rgbColor');
+  protected updateConfiguration(value: EditableLightConfiguration) {
+    this.model.update((current) => ({ ...current, ...value }));
   }
-  protected colorPreview() {
-    return this.model().mode === 'mixed'
-      ? rgbcctHex(this.model().rgbColor, this.model().colorTemperatureKelvin)
-      : this.model().rgbColor;
+  protected configurationChanged(field: LightConfigurationField) {
+    this.profileForm[field]().markAsTouched();
+    this.changed(field);
   }
   protected changed(field: ProfileField) {
     this.fieldChanged.emit(field);
@@ -165,7 +155,6 @@ export class ProfileFormComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode !== 'color_temperature' && this.profileForm.rgbColor().invalid())
-      this.colorPicker()?.focus();
+    if (this.model().mode !== 'color_temperature' && this.profileForm.rgbColor().invalid()) return;
   }
 }

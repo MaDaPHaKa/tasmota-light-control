@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.on-the-fly-control {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.on-the-fly-control__header h2 {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+.on-the-fly-control__header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.on-the-fly-control__submit {
+  justify-self: start;
+}
+
+button mat-icon {
+  margin-right: 6px;
+}
+
+@media (max-width: 600px) {
+  .on-the-fly-control__submit {
+    width: 100%;
+  }
+}

@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.reset-bulbs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-sizing: border-box;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+h2 {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.reset-bulbs__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .reset-bulbs {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reset-bulbs__actions {
+    justify-content: stretch;
+  }
+
+  .reset-bulbs__actions button {
+    flex: 1 1 180px;
+  }
+}

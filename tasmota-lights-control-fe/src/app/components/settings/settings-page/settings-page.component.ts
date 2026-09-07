@@ -5,7 +5,6 @@ import {
   DestroyRef,
   inject,
   signal,
-  viewChild,
   viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,14 +13,11 @@ import { FormField, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
 import { ApiFailure } from '@model/api-error.model';
 import { ResetSettings } from '@model/settings.model';
 import { validateIntegerRange, validateUppercaseRgbHex } from '@functions/validators.function';
 import { SettingsApiService } from '@services/settings-api.service';
-import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
-import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
-import { rgbcctHex } from '@functions/light-color.function';
+import { EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
 import { SnackbarService } from '@services/snackbar.service';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
 
@@ -35,9 +31,7 @@ type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' |
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatRadioModule,
-    ModePreviewComponent,
-    RgbColorPickerComponent,
+    LightConfigurationComponent,
     PageHeader,
   ],
   templateUrl: './settings-page.component.html',
@@ -59,7 +53,6 @@ export class SettingsPageComponent {
   protected readonly pending = signal(false);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly controls = viewChildren<ElementRef<HTMLElement>>('formControl');
-  private readonly colorPicker = viewChild(RgbColorPickerComponent);
   protected readonly settingsForm = form(this.model, (p) => {
     required(p.dimmer, { message: 'Dimmer is required' });
     validate(p.dimmer, ({ value }) => this.serverValidation('dimmer') ?? validateIntegerRange(value(), 1, 100));
@@ -102,15 +95,10 @@ export class SettingsPageComponent {
         },
       });
   }
-  protected updateRgbColor(value: string) {
-    this.model.update((current) => ({ ...current, rgbColor: value }));
-    this.settingsForm.rgbColor().markAsTouched();
-    this.changed('rgbColor');
-  }
-  protected colorPreview() {
-    return this.model().mode === 'mixed'
-      ? rgbcctHex(this.model().rgbColor, this.model().colorTemperatureKelvin)
-      : this.model().rgbColor;
+  protected updateConfiguration(value: EditableLightConfiguration) { this.model.update((current) => ({ ...current, ...value })); }
+  protected configurationChanged(field: LightConfigurationField) {
+    this.settingsForm[field]().markAsTouched();
+    this.changed(field);
   }
   protected changed(field: SettingsField) {
     this.failure.update((f) =>
@@ -208,7 +196,6 @@ export class SettingsPageComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode !== 'color_temperature' && this.settingsForm.rgbColor().invalid())
-      this.colorPicker()?.focus();
+    if (this.model().mode !== 'color_temperature' && this.settingsForm.rgbColor().invalid()) return;
   }
 }

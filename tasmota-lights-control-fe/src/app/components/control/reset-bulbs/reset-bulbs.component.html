@@ -1,0 +1,14 @@
+<section class="reset-bulbs panel">
+  <div class="reset-bulbs__content">
+    <h2>Reset bulbs</h2>
+    <p>Restore configured defaults.</p>
+  </div>
+  <div class="reset-bulbs__actions">
+    <button mat-stroked-button [disabled]="!selectedBulbCount() || pending()" (click)="resetSelected.emit()">
+      Reset selected
+    </button>
+    <button mat-flat-button color="warn" [disabled]="!bulbCount() || pending()" (click)="resetAll.emit()">
+      {{ pending() ? 'Working…' : 'Reset all bulbs (' + bulbCount() + ')' }}
+    </button>
+  </div>
+</section>

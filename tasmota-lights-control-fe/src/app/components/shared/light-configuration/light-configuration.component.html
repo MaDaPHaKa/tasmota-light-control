@@ -1,0 +1,58 @@
+<div class="configuration">
+  <fieldset class="mode">
+    <legend>Mode</legend>
+    <mat-radio-group
+      [value]="value().mode"
+      [disabled]="disabled()"
+      (change)="update('mode', $event.value)"
+    >
+      <mat-radio-button value="rgb">RGB</mat-radio-button>
+      <mat-radio-button value="color_temperature">Color temperature</mat-radio-button>
+      <mat-radio-button value="mixed">RGB + CCT</mat-radio-button>
+    </mat-radio-group>
+    @if (errors().mode; as error) { <p class="field-error">{{ error }}</p> }
+  </fieldset>
+
+  <div class="body">
+    <div class="color">
+    <app-rgb-color-picker
+      [value]="value().rgbColor"
+      (valueChange)="update('rgbColor', $event)"
+      [disabled]="disabled() || value().mode === 'color_temperature'"
+      [hideSwatch]="true"
+      [hideText]="true"
+      [compact]="compact()"
+      [errorMessage]="errors().rgbColor ?? null"
+    />
+    </div>
+    <div class="controls">
+      <mat-form-field class="dimmer" appearance="outline">
+        <mat-label>Dimmer (1–100)</mat-label>
+        <input matInput type="number" min="1" max="100" [value]="value().dimmer" [disabled]="disabled()" (input)="update('dimmer', +$any($event.target).value)" />
+        @if (errors().dimmer; as error) { <mat-error>{{ error }}</mat-error> }
+      </mat-form-field>
+      <mat-form-field class="temperature" appearance="outline">
+    <mat-label>Color temperature (Kelvin)</mat-label>
+    <input
+      matInput
+      type="number"
+      min="2000"
+      max="6000"
+      [value]="value().colorTemperatureKelvin"
+      [disabled]="disabled() || value().mode === 'rgb'"
+      (input)="update('colorTemperatureKelvin', +$any($event.target).value)"
+    />
+    @if (errors().colorTemperatureKelvin; as error) { <mat-error>{{ error }}</mat-error> }
+      </mat-form-field>
+      <mat-form-field class="html-color" appearance="outline">
+        <mat-label>HTML color</mat-label>
+        <input matInput [value]="value().rgbColor" [disabled]="disabled() || value().mode === 'color_temperature'" (input)="update('rgbColor', $any($event.target).value)" />
+        @if (errors().rgbColor; as error) { <mat-error>{{ error }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="preview">
+    <app-mode-preview [color]="colorPreview()" [text]="colorPreview()" [dimmer]="value().dimmer" />
+  </div>
+</div>

@@ -7,58 +7,18 @@
   <h2>Reset defaults</h2>
   <p>These values apply when you reset one or more bulbs.</p>
   <form novalidate (submit)="$event.preventDefault(); save()">
-    <fieldset>
-      <mat-form-field appearance="outline"
-        ><mat-label>Dimmer</mat-label
-        ><input
-          #formControl
-          matInput
-          type="number"
-          [formField]="settingsForm.dimmer"
-          (input)="changed('dimmer')"
-        />
-        @if (showClientError('dimmer')) {
-          <mat-error>{{ clientError('dimmer') }}</mat-error>
-        }
-      </mat-form-field>
-
-      <legend>Mode</legend>
-      <mat-radio-group #formControl [formField]="settingsForm.mode" (change)="changed('mode')"
-        ><mat-radio-button value="rgb">RGB</mat-radio-button
-      ><mat-radio-button value="color_temperature"
-        >Color temperature</mat-radio-button
-      ><mat-radio-button value="mixed">RGB + CCT</mat-radio-button
-        ></mat-radio-group
-      >
-      @if (showClientError('mode')) {
-        <p class="field-error">{{ clientError('mode') }}</p>
-      }
-    </fieldset>
-    <div class="section-config">
-      @if (model().mode !== 'color_temperature') {
-        <app-rgb-color-picker
-          [value]="model().rgbColor"
-          (valueChange)="updateRgbColor($event)"
-          [disabled]="pending()"
-          [errorMessage]="showClientError('rgbColor') ? clientError('rgbColor') : null"
-        />
-      }
-      @if (model().mode !== 'rgb') {
-        <mat-form-field appearance="outline"
-          ><mat-label>Color temperature (Kelvin)</mat-label
-          ><input
-            #formControl
-            matInput
-            type="number"
-            [formField]="settingsForm.colorTemperatureKelvin"
-            (input)="changed('colorTemperatureKelvin')"
-          />
-          @if (showClientError('colorTemperatureKelvin')) {
-            <mat-error>{{ clientError('colorTemperatureKelvin') }}</mat-error>
-          }
-        </mat-form-field>
-      }
-    </div>
+    <app-light-configuration
+      [value]="model()"
+      [disabled]="pending()"
+      [errors]="{
+        dimmer: showClientError('dimmer') ? clientError('dimmer') : null,
+        mode: showClientError('mode') ? clientError('mode') : null,
+        rgbColor: showClientError('rgbColor') ? clientError('rgbColor') : null,
+        colorTemperatureKelvin: showClientError('colorTemperatureKelvin') ? clientError('colorTemperatureKelvin') : null
+      }"
+      (valueChange)="updateConfiguration($event)"
+      (fieldChange)="configurationChanged($event)"
+    />
     <fieldset class="fade-settings">
        <legend>Fading</legend>
       <mat-form-field appearance="outline">
@@ -73,11 +33,6 @@
       </mat-form-field>
     </fieldset>
     <div class="section-recap">
-      <app-mode-preview
-        [color]="colorPreview()"
-        [text]="colorPreview()"
-        [dimmer]="model().dimmer"
-      />
       <button mat-flat-button color="primary" type="submit" [disabled]="pending() || settingsForm().invalid()">
         {{ pending() ? 'Saving…' : 'Save      settings' }}
       </button>

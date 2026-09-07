@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.configuration {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mode { flex: 0 0 auto; }
+fieldset { padding: 0; border: 0; }
+legend { color: var(--color-text-dim); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
+mat-radio-group { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-top: 8px; }
+.body { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+.color { flex: 1 1 auto; min-width: 0; }
+.controls { display: flex; flex: 0 1 260px; flex-direction: column; gap: 14px; min-width: 140px; }
+.dimmer, .temperature, .html-color { width: 100%; }
+.preview { flex: 0 0 auto; }
+.field-error { margin: 8px 0 0; color: var(--color-error, #bf616a); font-size: 12px; }
+
+:host(.compact) .configuration { gap: 8px 16px; }
+:host(.compact) .body { gap: 16px; }
+:host(.compact) .controls { gap: 8px; }
+
+@container (max-width: 560px) {
+  .body {
+    gap: 10px;
+  }
+  .controls {
+    flex-basis: 35%;
+    min-width: 120px;
+  }
+}

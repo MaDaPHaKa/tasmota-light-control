@@ -9,6 +9,11 @@ form {
   max-width: 600px;
 }
 
+form > fieldset {
+  padding: 0;
+  border: 0;
+}
+
 mat-radio-group {
   display: flex;
   flex-wrap: wrap;

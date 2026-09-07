@@ -6,7 +6,8 @@
     [hideAlpha]="true"
     [disabled]="disabled()"
   />
-  <mat-form-field appearance="outline">
+  @if (!hideText()) {
+    <mat-form-field appearance="outline">
     <mat-label>Hex color</mat-label>
     <input
       #hexInput
@@ -20,7 +21,8 @@
       <mat-error>{{ message }}</mat-error>
     }
     <mat-hint id="rgb-format">Uppercase #RRGGBB</mat-hint>
-  </mat-form-field>
+    </mat-form-field>
+  }
   @if (!hideSwatch()) {
     <span class="swatch" [style.background-color]="value()" aria-hidden="true"></span>
   }

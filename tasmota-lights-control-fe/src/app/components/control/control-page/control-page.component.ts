@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -11,27 +10,22 @@ import { finalize, Observable } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
 import { AppStoreService } from '@services/app-store.service';
 import { ControlApiService } from '@services/control-api.service';
 import { SnackbarService } from '@services/snackbar.service';
 import { ControlOperationResult, SetPropertiesRequest } from '@model/control.model';
 import { ApiFailure } from '@model/api-error.model';
-import { LightMode, Uuid } from '@model/bulb.model';
+import { Uuid } from '@model/bulb.model';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
   ConfirmDialogResult,
 } from '@components/shared/confirm-dialog/confirm-dialog.component';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
-import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
-import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
-import { rgbcctHex } from '@functions/light-color.function';
-import { validateIntegerRange, validateUppercaseRgbHex } from '@functions/validators.function';
+import { ProfileControlComponent } from '@components/control/profile-control/profile-control.component';
+import { OnTheFlyControlComponent } from '@components/control/on-the-fly-control/on-the-fly-control.component';
+import { ResetBulbsComponent } from '@components/control/reset-bulbs/reset-bulbs.component';
 
 @Component({
   selector: 'app-control-page',
@@ -39,13 +33,10 @@ import { validateIntegerRange, validateUppercaseRgbHex } from '@functions/valida
   imports: [
     MatButtonModule,
     MatCheckboxModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
-    MatRadioModule,
-    MatSelectModule,
-    RgbColorPickerComponent,
-    ModePreviewComponent,
+    ProfileControlComponent,
+    OnTheFlyControlComponent,
+    ResetBulbsComponent,
     PageHeader,
   ],
   templateUrl: './control-page.component.html',
@@ -63,25 +54,6 @@ export class ControlPageComponent {
   protected readonly selectedProfile = signal<Uuid>('');
   protected readonly selectedBulbs = signal(new Set<Uuid>());
   protected readonly pending = signal(false);
-  protected readonly dimmer = signal(100);
-  protected readonly mode = signal<LightMode>('rgb');
-  protected readonly rgbColor = signal('#88C0D0');
-  protected readonly colorTemperatureKelvin = signal(3000);
-  protected readonly applyValid = computed(() => {
-    if (this.pending() || !this.selectedBulbs().size) return false;
-    if (this.dimmer() < 1 || this.dimmer() > 100) return false;
-    if (
-      this.mode() !== 'color_temperature' &&
-      validateUppercaseRgbHex(this.rgbColor()) !== undefined
-    )
-      return false;
-    if (
-      this.mode() !== 'rgb' &&
-      validateIntegerRange(this.colorTemperatureKelvin(), 2000, 6000) !== undefined
-    )
-      return false;
-    return true;
-  });
   protected chooseProfile(id: Uuid) {
     this.selectedProfile.set(id);
   }
@@ -109,13 +81,10 @@ export class ControlPageComponent {
     if (!bulbIds.length || this.pending()) return;
     this.execute(this.api.reset({ bulbIds }));
   }
-  protected setProperties() {
+  protected setProperties(properties: Omit<SetPropertiesRequest, 'bulbIds'>) {
     const bulbIds = [...this.selectedBulbs()];
     if (!bulbIds.length || this.pending()) return;
-    const request: SetPropertiesRequest = { bulbIds, dimmer: this.dimmer() };
-    if (this.mode() !== 'color_temperature') request.rgbColor = this.rgbColor().toUpperCase();
-    if (this.mode() !== 'rgb') request.colorTemperatureKelvin = this.colorTemperatureKelvin();
-    this.execute(this.api.setProperties(request));
+    this.execute(this.api.setProperties({ bulbIds, ...properties }));
   }
   protected resetAll() {
     if (!this.bulbs().length || this.pending()) return;
@@ -135,11 +104,6 @@ export class ControlPageComponent {
       .subscribe((value) => {
         if (value === 'confirmed') this.execute(this.api.resetAll());
       });
-  }
-  protected colorPreview() {
-    return this.mode() === 'mixed'
-      ? rgbcctHex(this.rgbColor(), this.colorTemperatureKelvin())
-      : this.rgbColor();
   }
   private execute(request: Observable<ControlOperationResult>) {
     if (this.pending()) return;

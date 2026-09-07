@@ -1,21 +1,37 @@
 :host {
   display: block;
+  min-width: 0;
+  container-type: inline-size;
 }
 .picker {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
   min-width: 0;
 }
 color-picker {
-  flex: 1 1 18rem;
-  min-width: 15rem;
+  display: block;
+  width: 100%;
+  min-width: 0;
   --cp-bg-color: var(--color-surface);
   --cp-border-color: var(--color-border);
   --cp-text-color: var(--color-text);
 }
 mat-form-field {
-  flex: 1 1 14rem;
+  width: 100%;
+  min-width: 0;
+}
+
+:host(.compact) .picker {
+  gap: 8px;
+}
+
+:host(.compact) color-picker {
+  min-width: 0;
+}
+
+:host(.compact) mat-form-field {
   min-width: 0;
 }
 .swatch {
@@ -23,4 +39,10 @@ mat-form-field {
   height: 3rem;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
+}
+
+@container (max-width: 700px) {
+  .picker {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

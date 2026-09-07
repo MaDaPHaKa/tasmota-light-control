@@ -16,17 +16,22 @@ import { ColorPicker } from '@acrodata/color-picker';
   imports: [ColorPicker, MatFormFieldModule, MatInputModule],
   templateUrl: './rgb-color-picker.component.html',
   styleUrl: './rgb-color-picker.component.scss',
+  host: {
+    '[class.compact]': 'compact()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RgbColorPickerComponent {
   readonly value = model.required<string>();
   readonly disabled = input(false);
   readonly hideSwatch = input(false);
+  readonly hideText = input(false);
+  readonly compact = input(false);
   readonly errorMessage = input<string | null>(null);
-  private readonly hexInput = viewChild.required<ElementRef<HTMLInputElement>>('hexInput');
+  private readonly hexInput = viewChild<ElementRef<HTMLInputElement>>('hexInput');
 
   focus(): void {
-    this.hexInput().nativeElement.focus();
+    this.hexInput()?.nativeElement.focus();
   }
 
   protected updateFromPicker(value: string): void {

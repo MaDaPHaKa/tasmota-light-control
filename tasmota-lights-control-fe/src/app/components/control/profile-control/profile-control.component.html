@@ -1,0 +1,25 @@
+<section class="profile-control panel">
+  <div class="profile-control__header">
+    <h2>Set profile</h2>
+    <p>Apply saved lighting settings to selected bulbs.</p>
+  </div>
+
+  <mat-form-field class="profile-control__select" appearance="outline">
+    <mat-label>Profile</mat-label>
+    <mat-select [value]="selectedProfile()" (selectionChange)="profileSelected.emit($event.value)">
+      @for (profile of profiles(); track profile.id) {
+        <mat-option [value]="profile.id">{{ profile.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button
+    class="profile-control__submit"
+    mat-flat-button
+    color="primary"
+    [disabled]="!selectedProfile() || !selectedBulbCount() || pending()"
+    (click)="applyProfile.emit()"
+  >
+    <mat-icon>bolt</mat-icon>{{ pending() ? 'Working…' : 'Apply profile' }}
+  </button>
+</section>
