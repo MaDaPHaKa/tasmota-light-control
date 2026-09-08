@@ -1,5 +1,5 @@
 <section class="on-the-fly-control panel">
-  <div class="on-the-fly-control__header">
+  <div class="header">
     <h2>Set on-the-fly properties</h2>
   </div>
 
@@ -9,8 +9,12 @@
     [compact]="true"
     (valueChange)="updateConfiguration($event)"
   />
-
-  <button class="on-the-fly-control__submit" mat-flat-button color="primary" [disabled]="!valid()" (click)="submit()">
+  <div class="actions">
+  <button class="submit" mat-flat-button color="primary" [disabled]="!valid()" (click)="submit()">
     <mat-icon>monitor_lighting</mat-icon>{{ pending() ? 'Working…' : 'Apply properties' }}
   </button>
+  <button class="submit" mat-flat-button color="primary" [disabled]="!valid()" (click)="applyDimmer()">
+    <mat-icon>brightness_6</mat-icon>{{ pending() ? 'Working…' : 'Apply dimmer' }}
+  </button>
+  </div>
 </section>

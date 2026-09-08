@@ -43,4 +43,10 @@ export class OnTheFlyControlComponent {
     if (this.mode() !== 'rgb') request.colorTemperatureKelvin = this.colorTemperatureKelvin();
     this.setProperties.emit(request);
   }
+
+  protected applyDimmer() {
+    if (!this.valid()) return;
+    const request: Omit<SetPropertiesRequest, 'bulbIds'> = { dimmer: this.dimmer() };
+    this.setProperties.emit(request);
+  }
 }
