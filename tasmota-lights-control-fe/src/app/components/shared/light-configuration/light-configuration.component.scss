@@ -7,30 +7,30 @@
 .configuration {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .mode { flex: 0 0 auto; }
 fieldset { padding: 0; border: 0; }
-legend { color: var(--color-text-dim); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
-mat-radio-group { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-top: 8px; }
-.body { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+legend { color: var(--color-text-dim); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.1em; }
+mat-radio-group { display: flex; flex-wrap: wrap; gap: 0.3125rem 1.125rem; margin-top: 0.5rem; }
+.body { display: flex; align-items: flex-start; gap: 1.5rem; min-width: 0; }
 .color { flex: 1 1 auto; min-width: 0; }
-.controls { display: flex; flex: 0 1 260px; flex-direction: column; gap: 14px; min-width: 140px; }
+.controls { display: flex; flex: 0 1 16.25rem; flex-direction: column; gap: 0.875rem; min-width: 8.75rem; }
 .dimmer, .temperature, .html-color { width: 100%; }
 .preview { flex: 0 0 auto; }
-.field-error { margin: 8px 0 0; color: var(--color-error, #bf616a); font-size: 12px; }
+.field-error { margin: 0.5rem 0 0; color: var(--color-error, #bf616a); font-size: 0.75rem; }
 
-:host(.compact) .configuration { gap: 8px 16px; }
-:host(.compact) .body { gap: 16px; }
-:host(.compact) .controls { gap: 8px; }
+:host(.compact) .configuration { gap: 0.5rem 1rem; }
+:host(.compact) .body { gap: 1rem; }
+:host(.compact) .controls { gap: 0.5rem; }
 
-@container (max-width: 560px) {
+@container (max-width: 35em) {
   .body {
-    gap: 10px;
+    gap: 0.625rem;
   }
   .controls {
     flex-basis: 35%;
-    min-width: 120px;
+    min-width: 7.5rem;
   }
 }

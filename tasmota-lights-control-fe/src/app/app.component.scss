@@ -15,8 +15,8 @@
 }
 
 main {
-  padding: clamp(12px, 2vw, 26px) clamp(10px, 2vw, 27px);
-  max-width: 1440px;
+  padding: clamp(0.75rem, 2vw, 1.625rem) clamp(0.625rem, 2vw, 1.6875rem);
+  max-width: 90rem;
 }
 
 .skip-link {

@@ -3,9 +3,9 @@
 }
 
 .sidebar {
-  width: 252px;
-  flex: 0 0 252px;
-  padding: 15px 9px 11px;
+  width: 15.75rem;
+  flex: 0 0 15.75rem;
+  padding: 0.9375rem 0.5625rem 0.6875rem;
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   display: flex;
@@ -15,10 +15,10 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 7px 21px;
+  gap: 0.375rem;
+  padding: 0 0.4375rem 1.3125rem;
   color: var(--color-text);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -27,23 +27,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 0.625rem;
   background: var(--color-primary);
   color: #2e3440;
 }
 
 .brand-mark mat-icon {
-  font-size: 21px;
-  width: 21px;
-  height: 21px;
+  font-size: 1.3125rem;
+  width: 1.3125rem;
+  height: 1.3125rem;
 }
 
 .workspace-label {
-  padding: 0 14px 13px;
+  padding: 0 0.875rem 0.8125rem;
   color: var(--color-text-dim);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.13em;
 }
@@ -51,19 +51,19 @@
 nav {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 nav a {
   display: flex;
   align-items: center;
-  gap: 13px;
-  min-height: 46px;
-  padding: 0 14px;
-  border-radius: 9px;
+  gap: 0.8125rem;
+  min-height: 2.875rem;
+  padding: 0 0.875rem;
+  border-radius: 0.5625rem;
   color: var(--color-text-muted);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 0.875rem;
   transition:
     background 0.2s,
     color 0.2s;
@@ -80,9 +80,9 @@ nav a.active {
 }
 
 nav mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
   color: var(--color-text-dim);
 }
 
@@ -93,10 +93,10 @@ nav a.active mat-icon {
 .nav-count {
   margin-left: auto;
   color: var(--color-text-dim);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 50em) {
   .sidebar {
     position: fixed;
     z-index: 10;

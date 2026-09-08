@@ -5,8 +5,8 @@
 form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 600px;
+  gap: 0.875rem;
+  max-width: 37.5rem;
 }
 
 form > fieldset {
@@ -17,12 +17,12 @@ form > fieldset {
 mat-radio-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .actions button:first-child {

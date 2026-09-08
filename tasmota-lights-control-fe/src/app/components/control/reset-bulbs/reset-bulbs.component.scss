@@ -6,34 +6,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 1.5rem;
   box-sizing: border-box;
-  padding: 15px;
+  padding: 0.9375rem;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: var(--color-surface);
 }
 
 h2 {
-  margin: 0 0 6px;
+  margin: 0 0 0.375rem;
   color: var(--color-text);
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 p {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .reset-bulbs__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.625rem;
   justify-content: flex-end;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5em) {
   .reset-bulbs {
     align-items: stretch;
     flex-direction: column;
@@ -44,6 +44,6 @@ p {
   }
 
   .reset-bulbs__actions button {
-    flex: 1 1 180px;
+    flex: 1 1 11.25rem;
   }
 }

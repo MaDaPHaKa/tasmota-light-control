@@ -7,7 +7,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
+  gap: 0.75rem;
   min-width: 0;
 }
 color-picker {
@@ -24,7 +24,7 @@ mat-form-field {
 }
 
 :host(.compact) .picker {
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 :host(.compact) color-picker {
@@ -41,7 +41,7 @@ mat-form-field {
   border-radius: 0.5rem;
 }
 
-@container (max-width: 700px) {
+@container (max-width: 43.75em) {
   .picker {
     grid-template-columns: minmax(0, 1fr);
   }
