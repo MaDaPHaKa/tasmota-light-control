@@ -1,8 +1,9 @@
 export interface MixedResetSettings {
   dimmer: number;
   mode: 'mixed';
-  rgbColor: string;
-  colorTemperatureKelvin: number;
+  rgbColor?: null;
+  colorTemperatureKelvin?: null;
+  mixedColor: string;
   fade: number | null;
   speed: number | null;
 }

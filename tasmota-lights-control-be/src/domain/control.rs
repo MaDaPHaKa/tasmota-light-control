@@ -12,6 +12,7 @@ pub struct SetProperties {
     pub dimmer: Option<i64>,
     pub rgb_color: Option<String>,
     pub color_temperature_kelvin: Option<i64>,
+    pub mixed_color: Option<String>,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -62,8 +63,9 @@ pub struct LiveState {
     pub reachability: String,
     pub power: Option<String>,
     pub dimmer: Option<u8>,
-    pub mode: Option<String>,
     pub rgb_color: Option<String>,
+    pub white_channels: Option<String>,
+    pub color_temperature_mired: Option<u16>,
     pub color_temperature_kelvin: Option<u16>,
     pub applied_profile_id: Option<Uuid>,
     pub checked_at: String,

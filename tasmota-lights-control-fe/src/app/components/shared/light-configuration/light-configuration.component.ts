@@ -1,20 +1,23 @@
-import { ChangeDetectionStrategy, Component, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { LightMode } from '@model/bulb.model';
-import { rgbcctHex } from '@functions/light-color.function';
+import { normalizeMixedColorHex, validateMixedColorHex } from '@functions/validators.function';
 import { ModePreviewComponent } from '@components/shared/mode-preview/mode-preview.component';
 import { RgbColorPickerComponent } from '@components/shared/rgb-color-picker/rgb-color-picker.component';
+
+export const DEFAULT_MIXED_COLOR = '#88C0D040BF';
 
 export interface LightConfigurationValue {
   dimmer: number;
   mode: LightMode;
   rgbColor: string;
   colorTemperatureKelvin: number;
+  mixedColor: string;
 }
 
-export type EditableLightConfiguration = Pick<LightConfigurationValue, 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin'>;
+export type EditableLightConfiguration = LightConfigurationValue;
 
 export type LightConfigurationField = keyof LightConfigurationValue;
 
@@ -23,6 +26,7 @@ export interface LightConfigurationErrors {
   mode?: string | null;
   rgbColor?: string | null;
   colorTemperatureKelvin?: string | null;
+  mixedColor?: string | null;
 }
 
 @Component({
@@ -42,9 +46,14 @@ export class LightConfigurationComponent {
   readonly valueChange = output<LightConfigurationValue>();
   readonly fieldChange = output<LightConfigurationField>();
   private readonly colorPicker = viewChild(RgbColorPickerComponent);
+  private readonly mixedColorInput = viewChild<ElementRef<HTMLInputElement>>('mixedColorInput');
 
   focusColor(): void {
     this.colorPicker()?.focus();
+  }
+
+  focusMixedColor(): void {
+    this.mixedColorInput()?.nativeElement.focus();
   }
 
   protected update(field: LightConfigurationField, fieldValue: number | string | LightMode): void {
@@ -54,6 +63,16 @@ export class LightConfigurationComponent {
 
   protected colorPreview(): string {
     const value = this.value();
-    return value.mode === 'mixed' ? rgbcctHex(value.rgbColor, value.colorTemperatureKelvin) : value.rgbColor;
+    if (value.mode !== 'mixed') return value.rgbColor;
+    return validateMixedColorHex(value.mixedColor) ? '' : normalizeMixedColorHex(value.mixedColor).slice(0, 7);
+  }
+
+  protected previewText(): string {
+    const value = this.value();
+    return value.mode === 'mixed'
+      ? validateMixedColorHex(value.mixedColor) === undefined
+        ? normalizeMixedColorHex(value.mixedColor)
+        : value.mixedColor
+      : this.colorPreview();
   }
 }

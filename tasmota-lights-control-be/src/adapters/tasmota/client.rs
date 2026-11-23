@@ -7,7 +7,10 @@ use crate::{
 };
 use futures_util::StreamExt;
 use std::{sync::Arc, time::Duration};
-use tokio::{sync::Semaphore, time::timeout};
+use tokio::{
+    sync::Semaphore,
+    time::{Instant, timeout, timeout_at},
+};
 use tracing::{debug, error};
 
 pub fn endpoint_url(endpoint: &Endpoint, command: &Command) -> AppResult<url::Url> {
@@ -114,28 +117,24 @@ impl BulbController for TasmotaClient {
     }
 
     async fn status(&self, endpoint: Endpoint) -> Result<DeviceState, ResultCode> {
-        timeout(self.timeout, async {
-            let mut state = parse_status(&self.request(endpoint.clone(), Command::Status).await?);
-            if state.rgb_color.is_none()
-                && let Ok(value) = self.request(endpoint.clone(), Command::Color).await
-            {
-                state.rgb_color = parse_status(&value).rgb_color;
-            }
-            if state.ct.is_none()
-                && let Ok(value) = self.request(endpoint, Command::ColorTemperature).await
-            {
-                state.ct = parse_status(&value).ct;
-            }
-            if state.mode.is_none() {
-                state.mode = match (&state.rgb_color, state.ct) {
-                    (Some(_), None) => Some("rgb".into()),
-                    (None, Some(_)) => Some("color_temperature".into()),
-                    _ => None,
-                };
-            }
-            Ok(state)
-        })
-        .await
-        .map_err(|_| ResultCode::Timeout)?
+        let deadline = Instant::now() + self.timeout;
+        let mut state = parse_status(&self.request(endpoint.clone(), Command::Status).await?);
+        if state.rgb_color.is_none()
+            && state.white_channels.is_none()
+            && let Ok(Ok(value)) =
+                timeout_at(deadline, self.request(endpoint.clone(), Command::Color)).await
+        {
+            let color = parse_status(&value);
+            state.rgb_color = color.rgb_color;
+            state.white_channels = color.white_channels;
+        }
+        if state.ct.is_none()
+            && Instant::now() < deadline
+            && let Ok(Ok(value)) =
+                timeout_at(deadline, self.request(endpoint, Command::ColorTemperature)).await
+        {
+            state.ct = parse_status(&value).ct;
+        }
+        Ok(state)
     }
 }

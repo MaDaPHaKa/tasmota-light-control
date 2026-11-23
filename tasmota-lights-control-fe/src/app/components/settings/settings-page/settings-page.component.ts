@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  viewChild,
   viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,13 +16,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ApiFailure } from '@model/api-error.model';
 import { ResetSettings } from '@model/settings.model';
-import { validateIntegerRange, validateUppercaseRgbHex } from '@functions/validators.function';
+import {
+  normalizeMixedColorHex,
+  validateIntegerRange,
+  validateMixedColorHex,
+  validateUppercaseRgbHex,
+} from '@functions/validators.function';
 import { SettingsApiService } from '@services/settings-api.service';
-import { EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
+import { DEFAULT_MIXED_COLOR, EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
 import { SnackbarService } from '@services/snackbar.service';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
 
-type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'fade' | 'speed';
+type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'mixedColor' | 'fade' | 'speed';
 
 @Component({
   selector: 'app-settings-page',
@@ -47,25 +53,28 @@ export class SettingsPageComponent {
     mode: 'color_temperature' as 'rgb' | 'color_temperature' | 'mixed',
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
+    mixedColor: DEFAULT_MIXED_COLOR,
     fade: 1 as number | null,
     speed: 4 as number | null,
   });
   protected readonly pending = signal(false);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly controls = viewChildren<ElementRef<HTMLElement>>('formControl');
+  private readonly lightConfiguration = viewChild(LightConfigurationComponent);
   protected readonly settingsForm = form(this.model, (p) => {
     required(p.dimmer, { message: 'Dimmer is required' });
     validate(p.dimmer, ({ value }) => this.serverValidation('dimmer') ?? validateIntegerRange(value(), 1, 100));
     validate(p.mode, () => this.serverValidation('mode'));
     validate(p.rgbColor, ({ value }) =>
-      this.serverValidation('rgbColor') ??
-        (this.model().mode === 'rgb' ? validateUppercaseRgbHex(value()) : undefined),
+      this.model().mode === 'rgb' ? this.serverValidation('rgbColor') ?? validateUppercaseRgbHex(value()) : undefined,
     );
     validate(p.colorTemperatureKelvin, ({ value }) =>
-      this.serverValidation('colorTemperatureKelvin') ??
-        (this.model().mode !== 'rgb'
-          ? validateIntegerRange(value(), 2000, 6000)
-          : undefined),
+      this.model().mode === 'color_temperature'
+        ? this.serverValidation('colorTemperatureKelvin') ?? validateIntegerRange(value(), 2000, 6000)
+        : undefined,
+    );
+    validate(p.mixedColor, ({ value }) =>
+      this.model().mode === 'mixed' ? this.serverValidation('mixedColor') ?? validateMixedColorHex(value()) : undefined,
     );
     validate(p.fade, ({ value }) => {
       const current = value();
@@ -101,11 +110,12 @@ export class SettingsPageComponent {
     this.changed(field);
   }
   protected changed(field: SettingsField) {
+    const apiField = field === 'rgbColor' ? 'rgb_color' : field;
     this.failure.update((f) =>
       f
         ? {
             ...f,
-            fields: Object.fromEntries(Object.entries(f.fields).filter(([key]) => key !== field)),
+            fields: Object.fromEntries(Object.entries(f.fields).filter(([key]) => key !== field && key !== apiField)),
           }
         : null,
     );
@@ -154,8 +164,7 @@ export class SettingsPageComponent {
           : {
               dimmer: v.dimmer,
               mode: 'mixed',
-              rgbColor: v.rgbColor.toUpperCase(),
-              colorTemperatureKelvin: v.colorTemperatureKelvin,
+              mixedColor: normalizeMixedColorHex(v.mixedColor),
               fade,
               speed,
             };
@@ -182,8 +191,9 @@ export class SettingsPageComponent {
     this.settingsForm().reset({
       dimmer: v.dimmer,
       mode: v.mode,
-      rgbColor: v.rgbColor ?? '#88C0D0',
-      colorTemperatureKelvin: v.colorTemperatureKelvin ?? 3000,
+      rgbColor: v.mode === 'rgb' ? v.rgbColor : '#88C0D0',
+      colorTemperatureKelvin: v.mode === 'color_temperature' ? v.colorTemperatureKelvin : 3000,
+      mixedColor: v.mode === 'mixed' ? v.mixedColor : DEFAULT_MIXED_COLOR,
       fade: v.fade ?? null,
       speed: v.speed ?? null,
     });
@@ -196,6 +206,10 @@ export class SettingsPageComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode !== 'color_temperature' && this.settingsForm.rgbColor().invalid()) return;
+    if (this.model().mode === 'mixed' && this.settingsForm.mixedColor().invalid()) {
+      this.lightConfiguration()?.focusMixedColor();
+    } else if (this.model().mode === 'rgb' && this.settingsForm.rgbColor().invalid()) {
+      this.lightConfiguration()?.focusColor();
+    }
   }
 }

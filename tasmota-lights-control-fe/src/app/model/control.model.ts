@@ -11,6 +11,7 @@ export interface SetPropertiesRequest {
   dimmer?: number;
   rgbColor?: string;
   colorTemperatureKelvin?: number;
+  mixedColor?: string;
 }
 export interface DirectLinkRequest {
   bulbId: Uuid;

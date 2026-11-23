@@ -11,12 +11,21 @@ pub fn name(input: String) -> AppResult<(String, String)> {
     }
     Ok((display.to_lowercase(), display))
 }
-pub type ValidLight = (String, String, u8, String, Option<String>, Option<u16>);
+pub type ValidLight = (
+    String,
+    String,
+    u8,
+    String,
+    Option<String>,
+    Option<u16>,
+    Option<String>,
+);
 pub type ValidSettings = (
     u8,
     String,
     Option<String>,
     Option<u16>,
+    Option<String>,
     Option<u8>,
     Option<u8>,
 );
@@ -46,9 +55,40 @@ fn validate_property_values(
     }
     (
         dimmer.and_then(|value| u8::try_from(value).ok()),
-        rgb.map(str::to_uppercase),
+        rgb.map(str::to_ascii_uppercase),
         kelvin.and_then(|value| u16::try_from(value).ok()),
     )
+}
+
+fn validate_mixed_color(
+    fields: &mut BTreeMap<String, String>,
+    color: Option<&str>,
+    has_legacy_fields: bool,
+) -> Option<String> {
+    let color = color?;
+    if has_legacy_fields {
+        fields.insert(
+            "mixedColor".into(),
+            "Mixed color cannot be combined with RGB color or color temperature".into(),
+        );
+        return None;
+    }
+    let hex = color.strip_prefix('#').unwrap_or(color);
+    if hex.len() != 10 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        fields.insert(
+            "mixedColor".into(),
+            "Mixed color must be 10 hex digits (RGB, cold white, warm white)".into(),
+        );
+        return None;
+    }
+    Some(format!("#{}", hex.to_ascii_uppercase()))
+}
+
+fn legacy_mixed_color(rgb: &str, kelvin: u16) -> String {
+    // Keep the legacy Kelvin interpolation, but emit the white bytes in Tasmota order.
+    let warm = (6000 - u32::from(kelvin)) * 255 / 4000;
+    let cold = 255 - warm;
+    format!("{rgb}{cold:02X}{warm:02X}")
 }
 
 pub fn light(input: LightInput) -> AppResult<ValidLight> {
@@ -57,19 +97,29 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
     if display_name.is_empty() || display_name.chars().count() > 80 {
         fields.insert("name".into(), "Name must contain 1 to 80 characters".into());
     }
-    let rgb = input.rgb_color.0.map(|value| value.to_uppercase());
-    let (_, _, _) = validate_property_values(
+    let (dimmer, rgb, kelvin) = validate_property_values(
         &mut fields,
         Some(input.dimmer),
-        rgb.as_deref(),
-        input.color_temperature_kelvin.0,
+        input.rgb_color.as_deref(),
+        input.color_temperature_kelvin,
     );
+    let mixed = validate_mixed_color(
+        &mut fields,
+        input.mixed_color.as_deref(),
+        input.rgb_color.is_some() || input.color_temperature_kelvin.is_some(),
+    );
+    if input.mode != "mixed" && input.mixed_color.is_some() {
+        fields.insert(
+            "mixedColor".into(),
+            "Mixed color requires mixed mode".into(),
+        );
+    }
     match input.mode.as_str() {
         "rgb" => {
             if rgb.is_none() {
                 fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
             }
-            if input.color_temperature_kelvin.0.is_some() {
+            if input.color_temperature_kelvin.is_some() {
                 fields.insert(
                     "colorTemperatureKelvin".into(),
                     "RGB mode requires null color temperature".into(),
@@ -83,7 +133,7 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
                     "Color temperature mode requires null RGB color".into(),
                 );
             }
-            if input.color_temperature_kelvin.0.is_none() {
+            if input.color_temperature_kelvin.is_none() {
                 fields.insert(
                     "colorTemperatureKelvin".into(),
                     "Color temperature must be between 2000 and 6000".into(),
@@ -91,13 +141,10 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
             }
         }
         "mixed" => {
-            if rgb.is_none() {
-                fields.insert("rgbColor".into(), "RGB color must match #RRGGBB".into());
-            }
-            if input.color_temperature_kelvin.0.is_none() {
+            if input.mixed_color.is_none() && (rgb.is_none() || kelvin.is_none()) {
                 fields.insert(
-                    "colorTemperatureKelvin".into(),
-                    "Color temperature must be between 2000 and 6000".into(),
+                    "mixedColor".into(),
+                    "Provide a mixed color or both RGB color and color temperature".into(),
                 );
             }
         }
@@ -109,32 +156,36 @@ pub fn light(input: LightInput) -> AppResult<ValidLight> {
         }
     }
     if fields.is_empty() {
-        let dimmer = u8::try_from(input.dimmer).map_err(|_| AppError::Internal)?;
-        let kelvin = input
-            .color_temperature_kelvin
-            .0
-            .map(u16::try_from)
-            .transpose()
-            .map_err(|_| AppError::Internal)?;
+        let (rgb, kelvin, mixed) = if input.mode == "mixed" {
+            (
+                None,
+                None,
+                mixed.or_else(|| Some(legacy_mixed_color(rgb.as_deref()?, kelvin?))),
+            )
+        } else {
+            (rgb, kelvin, None)
+        };
         Ok((
             display_name.to_lowercase(),
             display_name,
-            dimmer,
+            dimmer.ok_or(AppError::Internal)?,
             input.mode,
             rgb,
             kelvin,
+            mixed,
         ))
     } else {
         Err(AppError::Validation(fields))
     }
 }
 pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
-    let (_, _, dimmer, mode, rgb, kelvin) = light(LightInput {
+    let (_, _, dimmer, mode, rgb, kelvin, mixed) = light(LightInput {
         name: "settings".into(),
         dimmer: input.dimmer,
         mode: input.mode,
         rgb_color: input.rgb_color,
         color_temperature_kelvin: input.color_temperature_kelvin,
+        mixed_color: input.mixed_color,
     })?;
     let mut fields = BTreeMap::new();
     if input.fade.is_some_and(|value| !(0..=1).contains(&value)) {
@@ -151,6 +202,7 @@ pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
         mode,
         rgb,
         kelvin,
+        mixed,
         input
             .fade
             .map(u8::try_from)
@@ -168,25 +220,39 @@ pub fn properties(
     dimmer: Option<i64>,
     rgb_color: Option<String>,
     color_temperature_kelvin: Option<i64>,
-) -> AppResult<(Option<u8>, Option<String>, Option<u16>)> {
+    mixed_color: Option<String>,
+) -> AppResult<ValidProperties> {
     let mut fields = BTreeMap::new();
-    if dimmer.is_none() && rgb_color.is_none() && color_temperature_kelvin.is_none() {
+    if dimmer.is_none()
+        && rgb_color.is_none()
+        && color_temperature_kelvin.is_none()
+        && mixed_color.is_none()
+    {
         fields.insert(
             "properties".into(),
             "At least one property is required".into(),
         );
     }
-    let rgb = rgb_color.map(|value| value.to_uppercase());
-    let (dimmer_value, rgb_value, kelvin_value) = validate_property_values(
+    let (dimmer, rgb, kelvin) = validate_property_values(
         &mut fields,
         dimmer,
-        rgb.as_deref(),
+        rgb_color.as_deref(),
         color_temperature_kelvin,
+    );
+    let mixed = validate_mixed_color(
+        &mut fields,
+        mixed_color.as_deref(),
+        rgb_color.is_some() || color_temperature_kelvin.is_some(),
     );
     if !fields.is_empty() {
         return Err(AppError::Validation(fields));
     }
-    Ok((dimmer_value, rgb_value, kelvin_value))
+    let (color, kelvin) = match (mixed, rgb, kelvin) {
+        (Some(color), _, _) => (Some(color), None),
+        (None, Some(rgb), Some(kelvin)) => (Some(legacy_mixed_color(&rgb, kelvin)), None),
+        (None, rgb, kelvin) => (rgb, kelvin),
+    };
+    Ok((dimmer, color, kelvin))
 }
 pub fn now() -> String {
     OffsetDateTime::now_utc()
@@ -201,7 +267,6 @@ pub fn timestamp(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::profile::RequiredOption;
 
     #[test]
     fn light_reports_name_dimmer_and_mode_errors_together() {
@@ -209,8 +274,9 @@ mod tests {
             name: " ".into(),
             dimmer: 256,
             mode: "invalid".into(),
-            rgb_color: RequiredOption(None),
-            color_temperature_kelvin: RequiredOption(None),
+            rgb_color: None,
+            color_temperature_kelvin: None,
+            mixed_color: None,
         });
 
         let Err(AppError::Validation(fields)) = result else {
@@ -220,5 +286,31 @@ mod tests {
             fields.keys().cloned().collect::<Vec<_>>(),
             ["dimmer", "mode", "name"]
         );
+    }
+
+    #[test]
+    fn properties_normalize_mixed_hex_without_losing_channel_values() {
+        let valid = properties(Some(40), None, None, Some("#abcdef12a3".into())).unwrap();
+        assert_eq!(valid, (Some(40), Some("#ABCDEF12A3".into()), None));
+        for color in ["#88C0D0", "88C0D0123Z", "#88C0D012345", "88C0D01234;"] {
+            assert!(matches!(
+                properties(None, None, None, Some(color.into())),
+                Err(AppError::Validation(fields)) if fields.contains_key("mixedColor")
+            ));
+        }
+        assert!(matches!(
+            properties(None, Some("#88C0D0".into()), Some(3000), Some("88C0D01234".into())),
+            Err(AppError::Validation(fields)) if fields.contains_key("mixedColor")
+        ));
+    }
+
+    #[test]
+    fn legacy_properties_put_cold_white_before_warm_white() {
+        for (kelvin, expected) in [(2000, "#88C0D000FF"), (6000, "#88C0D0FF00")] {
+            let (_, color, ct) =
+                properties(None, Some("#88C0D0".into()), Some(kelvin), None).unwrap();
+            assert_eq!(color.as_deref(), Some(expected));
+            assert_eq!(ct, None);
+        }
     }
 }

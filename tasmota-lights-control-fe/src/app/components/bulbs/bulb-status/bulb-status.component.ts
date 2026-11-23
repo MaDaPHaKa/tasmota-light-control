@@ -20,12 +20,4 @@ export class BulbStatusComponent {
     const state = this.state();
     return state.kind === 'error' ? state.message : '';
   }
-  protected value() {
-    const v = this.loaded();
-    return v?.mode === 'rgb'
-      ? v.rgbColor
-      : v?.mode === 'color_temperature'
-        ? `${v.colorTemperatureKelvin} K`
-        : 'Unknown';
-  }
 }

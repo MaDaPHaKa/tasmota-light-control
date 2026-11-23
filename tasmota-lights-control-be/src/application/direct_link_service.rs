@@ -40,8 +40,10 @@ impl DirectLinkService {
             .endpoint(&bulb.ip_address, i64::from(bulb.port))?;
         let command = command::properties(
             Some(profile.dimmer),
-            Some(&profile.mode),
-            profile.rgb_color.as_deref(),
+            profile
+                .mixed_color
+                .as_deref()
+                .or(profile.rgb_color.as_deref()),
             profile.color_temperature_kelvin,
             settings.fade,
             settings.speed,

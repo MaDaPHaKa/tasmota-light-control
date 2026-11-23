@@ -87,8 +87,16 @@ impl Command {
                 if let Some(ct) = ct {
                     commands.push(format!("CT {ct}"));
                 }
-                if let Some(dimmer) = dimmer {
-                    commands.push(format!("Dimmer {dimmer}"));
+                // Dimmer4 preserves the RGB/white balance but would light an all-zero color.
+                if let Some(dimmer) = dimmer
+                    && color.as_deref() != Some("#0000000000")
+                {
+                    let name = if color.as_ref().is_some_and(|hex| hex.len() == 11) {
+                        "Dimmer4"
+                    } else {
+                        "Dimmer"
+                    };
+                    commands.push(format!("{name} {dimmer}"));
                 }
                 format!("Backlog0 {}", commands.join("; "))
             }
@@ -100,8 +108,8 @@ impl Command {
 pub struct DeviceState {
     pub power: Option<String>,
     pub dimmer: Option<u8>,
-    pub mode: Option<String>,
     pub rgb_color: Option<String>,
+    pub white_channels: Option<String>,
     pub ct: Option<u16>,
 }
 

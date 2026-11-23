@@ -22,8 +22,9 @@ export interface MixedProfileInput {
   name: string;
   dimmer: number;
   mode: 'mixed';
-  rgbColor: string;
-  colorTemperatureKelvin: number;
+  rgbColor?: null;
+  colorTemperatureKelvin?: null;
+  mixedColor: string;
 }
 export type LightProfileInput = RgbProfileInput | ColorTemperatureProfileInput | MixedProfileInput;
 export type RgbLightProfile = RgbProfileInput & ResourceFields;

@@ -19,7 +19,8 @@ impl SettingsService {
             .await
     }
     pub async fn save(&self, input: SettingsInput) -> AppResult<Settings> {
-        let (dimmer, mode, rgb_color, color_temperature_kelvin, fade, speed) = settings(input)?;
+        let (dimmer, mode, rgb_color, color_temperature_kelvin, mixed_color, fade, speed) =
+            settings(input)?;
         self.db
             .run(move |connection| {
                 settings_repository::save(
@@ -27,10 +28,9 @@ impl SettingsService {
                     Settings {
                         dimmer,
                         mode,
-                        rgb_color: crate::domain::profile::RequiredOption(rgb_color),
-                        color_temperature_kelvin: crate::domain::profile::RequiredOption(
-                            color_temperature_kelvin,
-                        ),
+                        rgb_color,
+                        color_temperature_kelvin,
+                        mixed_color,
                         fade,
                         speed,
                     },

@@ -13,6 +13,13 @@ Runtime layout:
 
 Backend defaults to `127.0.0.1:8080`. Put nginx in front for LAN access. Backend communicates with bulbs directly.
 
+## Mixed colors and live status
+
+- Mixed profiles, reset settings and on-the-fly controls accept `mixedColor`: 10 hex digits in `RR GG BB CW WW` order (cold white before warm white), optional `#`. Example: `#88C0D040BF`.
+- Tasmota [11.1.0](https://github.com/arendst/Tasmota/blob/v11.1.0/tasmota/xdrv_04_light.ino#L2538-L2601) receives the hex directly. With default linked RGB/CT, `Dimmer4` preserves the RGB/white balance when setting brightness.
+- SQLite migration 4 preserves existing profiles and reset settings. Legacy mixed writes with `rgbColor` and `colorTemperatureKelvin` still work; mixed reads return `mixedColor`.
+- Bulb status shows `rgbColor` (`#RRGGBB`) and `colorTemperatureMired` (Tasmota's native CT setpoint, not a measurement). The API also retains `whiteChannels` (`CWWW`) and `colorTemperatureKelvin`.
+
 ## Build
 
 From repository root:

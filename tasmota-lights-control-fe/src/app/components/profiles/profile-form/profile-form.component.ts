@@ -6,6 +6,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
   viewChildren,
 } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
@@ -15,13 +16,15 @@ import { MatInputModule } from '@angular/material/input';
 import { ApiFailure } from '@model/api-error.model';
 import { LightProfile, LightProfileInput } from '@model/profile.model';
 import {
+  normalizeMixedColorHex,
   validateIntegerRange,
+  validateMixedColorHex,
   validateTrimmedRequired,
   validateUppercaseRgbHex,
 } from '@functions/validators.function';
-import { EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
+import { DEFAULT_MIXED_COLOR, EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
 
-type ProfileField = 'name' | 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin';
+type ProfileField = 'name' | 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'mixedColor';
 
 @Component({
   selector: 'app-profile-form',
@@ -50,8 +53,10 @@ export class ProfileFormComponent {
     mode: 'rgb' as 'rgb' | 'color_temperature' | 'mixed',
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
+    mixedColor: DEFAULT_MIXED_COLOR,
   });
   readonly controls = viewChildren<ElementRef<HTMLElement>>('formControl');
+  private readonly lightConfiguration = viewChild(LightConfigurationComponent);
   readonly profileForm = form(this.model, (p) => {
     required(p.name, { message: 'Name is required' });
     required(p.dimmer, { message: 'Dimmer is required' });
@@ -59,14 +64,15 @@ export class ProfileFormComponent {
     validate(p.dimmer, ({ value }) => this.serverValidation('dimmer') ?? validateIntegerRange(value(), 1, 100));
     validate(p.mode, () => this.serverValidation('mode'));
     validate(p.rgbColor, ({ value }) =>
-      this.serverValidation('rgbColor') ??
-        (this.model().mode !== 'color_temperature' ? validateUppercaseRgbHex(value()) : undefined),
+      this.model().mode === 'rgb' ? this.serverValidation('rgbColor') ?? validateUppercaseRgbHex(value()) : undefined,
     );
     validate(p.colorTemperatureKelvin, ({ value }) =>
-      this.serverValidation('colorTemperatureKelvin') ??
-          (this.model().mode !== 'rgb'
-          ? validateIntegerRange(value(), 2000, 6000)
-          : undefined),
+      this.model().mode === 'color_temperature'
+        ? this.serverValidation('colorTemperatureKelvin') ?? validateIntegerRange(value(), 2000, 6000)
+        : undefined,
+    );
+    validate(p.mixedColor, ({ value }) =>
+      this.model().mode === 'mixed' ? this.serverValidation('mixedColor') ?? validateMixedColorHex(value()) : undefined,
     );
   });
   constructor() {
@@ -78,8 +84,9 @@ export class ProfileFormComponent {
               name: profile.name,
               dimmer: profile.dimmer,
               mode: profile.mode,
-              rgbColor: profile.rgbColor ?? '#88C0D0',
-              colorTemperatureKelvin: profile.colorTemperatureKelvin ?? 3000,
+              rgbColor: profile.mode === 'rgb' ? profile.rgbColor : '#88C0D0',
+              colorTemperatureKelvin: profile.mode === 'color_temperature' ? profile.colorTemperatureKelvin : 3000,
+              mixedColor: profile.mode === 'mixed' ? profile.mixedColor : DEFAULT_MIXED_COLOR,
             }
           : {
               name: '',
@@ -87,6 +94,7 @@ export class ProfileFormComponent {
               mode: 'rgb',
               rgbColor: '#88C0D0',
               colorTemperatureKelvin: 3000,
+              mixedColor: DEFAULT_MIXED_COLOR,
             },
       );
     });
@@ -120,8 +128,7 @@ export class ProfileFormComponent {
               name: v.name.trim(),
               dimmer: v.dimmer,
               mode: 'mixed',
-              rgbColor: v.rgbColor.toUpperCase(),
-              colorTemperatureKelvin: v.colorTemperatureKelvin,
+              mixedColor: normalizeMixedColorHex(v.mixedColor),
             },
     );
   }
@@ -155,6 +162,10 @@ export class ProfileFormComponent {
       control.nativeElement.focus();
       return;
     }
-    if (this.model().mode !== 'color_temperature' && this.profileForm.rgbColor().invalid()) return;
+    if (this.model().mode === 'mixed' && this.profileForm.mixedColor().invalid()) {
+      this.lightConfiguration()?.focusMixedColor();
+    } else if (this.model().mode === 'rgb' && this.profileForm.rgbColor().invalid()) {
+      this.lightConfiguration()?.focusColor();
+    }
   }
 }

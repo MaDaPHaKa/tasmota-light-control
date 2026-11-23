@@ -69,11 +69,12 @@ export class ProfilesPageComponent {
       });
   }
   protected clearField(field: string) {
+    const apiField = field === 'rgbColor' ? 'rgb_color' : field;
     this.failure.update((f) =>
       f
         ? {
             ...f,
-            fields: Object.fromEntries(Object.entries(f.fields).filter(([key]) => key !== field)),
+            fields: Object.fromEntries(Object.entries(f.fields).filter(([key]) => key !== field && key !== apiField)),
           }
         : null,
     );

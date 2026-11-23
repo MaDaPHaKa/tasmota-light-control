@@ -18,10 +18,10 @@
           <dd>{{ status.dimmer === null ? 'Unknown' : status.dimmer + '%' }}</dd>
         </div>
         <div>
-          <dt>Mode/value</dt>
-          <dd class="mode-value">
-            {{ status.mode ?? 'Unknown' }} · {{ value() }}
-            @if (status.mode === 'rgb' && status.rgbColor; as color) {
+          <dt>RGB</dt>
+          <dd>
+            {{ status.rgbColor ?? 'Unknown' }}
+            @if (status.rgbColor; as color) {
               <span
                 class="color-swatch"
                 [style.background-color]="color"
@@ -30,6 +30,10 @@
               ></span>
             }
           </dd>
+        </div>
+        <div>
+          <dt>CT (mired)</dt>
+          <dd>{{ status.colorTemperatureMired ?? 'Unknown' }}</dd>
         </div>
         <div>
           <dt>Profile</dt>

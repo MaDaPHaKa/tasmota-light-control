@@ -36,6 +36,7 @@ pub async fn set_properties(
                 input.dimmer,
                 input.rgb_color,
                 input.color_temperature_kelvin,
+                input.mixed_color,
             )
             .await?,
     ))

@@ -31,3 +31,13 @@ export function validateUppercaseRgbHex(value: string): ValidationError | undefi
     return { kind: 'rgb', message: 'Enter uppercase RGB hex, for example #88C0D0.' };
   return undefined;
 }
+
+export function validateMixedColorHex(value: string): ValidationError | undefined {
+  if (!/^#?[0-9A-Fa-f]{10}$/.test(value))
+    return { kind: 'mixedColor', message: 'Enter 10 hex digits in RRGGBBCWWW order, for example 88C0D040BF.' };
+  return undefined;
+}
+
+export function normalizeMixedColorHex(value: string): string {
+  return `#${value.replace(/^#/, '').toUpperCase()}`;
+}

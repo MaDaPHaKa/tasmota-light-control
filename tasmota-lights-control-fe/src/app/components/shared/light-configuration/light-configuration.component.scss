@@ -17,7 +17,7 @@ mat-radio-group { display: flex; flex-wrap: wrap; gap: 0.3125rem 1.125rem; margi
 .body { display: flex; align-items: flex-start; gap: 1.5rem; min-width: 0; }
 .color { flex: 1 1 auto; min-width: 0; }
 .controls { display: flex; flex: 0 1 16.25rem; flex-direction: column; gap: 0.875rem; min-width: 8.75rem; }
-.dimmer, .temperature, .html-color { width: 100%; }
+.dimmer, .temperature, .html-color, .mixed-color { width: 100%; }
 .preview { flex: 0 0 auto; }
 .field-error { margin: 0.5rem 0 0; color: var(--color-error, #bf616a); font-size: 0.75rem; }
 

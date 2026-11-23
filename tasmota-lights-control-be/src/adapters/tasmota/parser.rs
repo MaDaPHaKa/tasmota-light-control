@@ -1,5 +1,6 @@
 use crate::ports::bulb_controller::DeviceState;
 use serde_json::{Map, Value};
+use std::fmt::Write;
 
 pub fn rejected(value: &Value) -> bool {
     match value {
@@ -30,25 +31,26 @@ pub fn status(value: &Value) -> DeviceState {
     state.dimmer = number(status, &["Dimmer"])
         .filter(|value| *value <= 100)
         .map(|value| value as u8);
-    state.rgb_color = text(status, &["Color"]).and_then(color);
-    state.ct = number(status, &["CT", "ColorTemperature"])
-        .filter(|value| *value > 0)
-        .map(|value| value as u16);
-    let explicit = text(status, &["Mode", "ColorMode", "LightMode"]).and_then(mode);
-    state.mode = explicit.or_else(|| match (&state.rgb_color, state.ct) {
-        (Some(color), _) if color.len() == 11 => Some("mixed".into()),
-        (Some(color), _) if color != "#000000" => Some("rgb".into()),
-        (_, Some(_)) => Some("color_temperature".into()),
-        _ => None,
-    });
-    if state.mode.is_none() {
-        state.rgb_color = None;
-        state.ct = None;
+    if let Some(channels) = text(status, &["Color"]).and_then(color) {
+        if channels.len() >= 6 {
+            state.rgb_color = Some(format!("#{}", &channels[..6]));
+        }
+        state.white_channels = match channels.len() {
+            4 => Some(channels),
+            10 => Some(channels[6..].to_owned()),
+            _ => None,
+        };
     }
+    state.ct = number(status, &["CT", "ColorTemperature"])
+        .filter(|value| (153..=500).contains(value))
+        .map(|value| value as u16);
     state
 }
 
 fn find_status_object(values: &Map<String, Value>) -> Option<&Map<String, Value>> {
+    if let Some(status) = object(values, "StatusSTS") {
+        return Some(status);
+    }
     if has_status_fields(values) {
         return Some(values);
     }
@@ -64,20 +66,16 @@ fn find_status_object(values: &Map<String, Value>) -> Option<&Map<String, Value>
 fn has_status_fields(values: &Map<String, Value>) -> bool {
     values.keys().any(|key| {
         [
-            "StatusSTS",
             "POWER",
             "POWER1",
             "Dimmer",
             "Color",
             "CT",
             "ColorTemperature",
-            "Mode",
-            "ColorMode",
-            "LightMode",
         ]
         .iter()
         .any(|alias| key.eq_ignore_ascii_case(alias))
-    }) && object(values, "StatusSTS").is_none()
+    })
 }
 
 fn object<'a>(values: &'a Map<String, Value>, alias: &str) -> Option<&'a Map<String, Value>> {
@@ -115,18 +113,17 @@ fn power(value: &str) -> Option<String> {
 }
 
 fn color(value: &str) -> Option<String> {
-    let value = value.trim().strip_prefix('#').unwrap_or(value.trim());
-    ((value.len() == 6 || value.len() == 10) && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
-        .then(|| format!("#{}", value.to_ascii_uppercase()))
-}
-
-fn mode(value: &str) -> Option<String> {
-    match value.to_ascii_lowercase().as_str() {
-        "rgb" | "color" => Some("rgb".into()),
-        "mixed" | "rgbcct" => Some("mixed".into()),
-        "ct" | "color_temperature" | "temperature" => Some("color_temperature".into()),
-        _ => None,
+    let value = value.trim();
+    if value.contains(',') {
+        let mut hex = String::new();
+        for channel in value.splitn(6, ',') {
+            write!(hex, "{:02X}", channel.trim().parse::<u8>().ok()?).ok()?;
+        }
+        return matches!(hex.len(), 4 | 6 | 8 | 10).then_some(hex);
     }
+    let hex = value.strip_prefix('#').unwrap_or(value);
+    (matches!(hex.len(), 4 | 6 | 8 | 10) && hex.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| hex.to_ascii_uppercase())
 }
 
 #[cfg(test)]
@@ -140,29 +137,55 @@ mod tests {
             status(&json!({"wrapper":{"light":{"POWER1":"ON","Dimmer":42,"Color":"ff8000"}}}));
 
         assert_eq!(
-            (state.power, state.dimmer, state.mode, state.rgb_color),
             (
-                Some("on".into()),
-                Some(42),
-                Some("rgb".into()),
-                Some("#FF8000".into())
-            )
+                state.power,
+                state.dimmer,
+                state.rgb_color,
+                state.white_channels
+            ),
+            (Some("on".into()), Some(42), Some("#FF8000".into()), None)
         );
     }
 
     #[test]
-    fn status_reads_rgb_from_rgbcct_color() {
+    fn status_splits_rgb_and_white_channels() {
         let state = status(&json!({
+            "POWER": "OFF",
             "StatusSTS": {
                 "POWER": "ON",
                 "Dimmer": 89,
-                "Color": "E38C520000",
+                "Color": "E38C5240BF",
                 "CT": 500
             }
         }));
 
-        assert_eq!(state.mode, Some("mixed".into()));
-        assert_eq!(state.rgb_color, Some("#E38C520000".into()));
+        assert_eq!(state.power.as_deref(), Some("on"));
+        assert_eq!(state.rgb_color.as_deref(), Some("#E38C52"));
+        assert_eq!(state.white_channels.as_deref(), Some("40BF"));
         assert_eq!(state.ct, Some(500));
+    }
+
+    #[test]
+    fn status_accepts_decimal_color_and_preserves_zero_channels() {
+        let state = status(&json!({"Color":"0,0,0,255,0", "CT":"153"}));
+        assert_eq!(state.rgb_color.as_deref(), Some("#000000"));
+        assert_eq!(state.white_channels.as_deref(), Some("FF00"));
+        assert_eq!(state.ct, Some(153));
+
+        let state = status(&json!({"Color":"#ff00000000", "CT":0}));
+        assert_eq!(state.rgb_color.as_deref(), Some("#FF0000"));
+        assert_eq!(state.white_channels.as_deref(), Some("0000"));
+        assert_eq!(state.ct, None);
+    }
+
+    #[test]
+    fn status_rejects_malformed_color_and_out_of_range_ct() {
+        let state = status(&json!({"Color":"256,0,0,0,0", "CT":65536}));
+        assert_eq!(
+            (state.rgb_color, state.white_channels, state.ct),
+            (None, None, None)
+        );
+        assert_eq!(status(&json!({"Color":"12345z6789"})).rgb_color, None);
+        assert_eq!(status(&json!({"CT":333})).ct, Some(333));
     }
 }

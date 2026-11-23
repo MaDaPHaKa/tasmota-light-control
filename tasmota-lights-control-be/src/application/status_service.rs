@@ -36,8 +36,9 @@ impl StatusService {
             reachability: reachability.into(),
             power: None,
             dimmer: None,
-            mode: None,
             rgb_color: None,
+            white_channels: None,
+            color_temperature_mired: None,
             color_temperature_kelvin: None,
             applied_profile_id: None,
             checked_at: now(),
@@ -46,35 +47,31 @@ impl StatusService {
 
     fn profile(state: &DeviceState, profiles: &[Profile]) -> Option<Uuid> {
         let dimmer = state.dimmer?;
-        if state.power.as_deref() != Some("on") || state.mode.is_none() {
+        if state.power.as_deref() != Some("on") {
             return None;
         }
-        let matches = profiles
-            .iter()
-            .filter(|profile| match state.mode.as_deref() {
-                Some("rgb") => {
-                    profile.mode == "rgb"
-                        && profile.dimmer == dimmer
-                        && rgb_matches_dimmer_scaled_color(
-                            profile.rgb_color.as_deref(),
-                            state.rgb_color.as_deref(),
-                            dimmer,
-                        )
+        let rgb_on = state
+            .rgb_color
+            .as_deref()
+            .is_some_and(|rgb| rgb != "#000000");
+        let white_on = state.white_channels.as_deref().map(|white| white != "0000");
+        let mut matches = profiles.iter().filter(|profile| {
+            profile.dimmer == dimmer
+                && match profile.mode.as_str() {
+                    "rgb" if rgb_on && white_on != Some(true) => rgb_matches_dimmer_scaled_color(
+                        profile.rgb_color.as_deref(),
+                        state.rgb_color.as_deref(),
+                        dimmer,
+                    ),
+                    "color_temperature" if !rgb_on && white_on == Some(true) => profile
+                        .color_temperature_kelvin
+                        .map(kelvin_to_ct)
+                        .is_some_and(|ct| state.ct == Some(ct)),
+                    _ => false,
                 }
-                Some("color_temperature") => {
-                    profile.mode == "color_temperature"
-                        && profile.dimmer == dimmer
-                        && state.ct.is_some_and(|ct| {
-                            (167..=333).contains(&ct)
-                                && profile
-                                    .color_temperature_kelvin
-                                    .is_some_and(|kelvin| kelvin_to_ct(kelvin) == ct)
-                        })
-                }
-                _ => false,
-            })
-            .collect::<Vec<_>>();
-        (matches.len() == 1).then(|| matches[0].id)
+        });
+        let matched = matches.next()?;
+        matches.next().is_none().then_some(matched.id)
     }
 
     async fn status_bulb(&self, bulb: Bulb, profiles: Arc<Vec<Profile>>) -> LiveState {
@@ -90,17 +87,21 @@ impl StatusService {
             }
         };
         match self.client.status(endpoint).await {
-            Ok(state) => LiveState {
-                bulb_id: bulb.id,
-                reachability: "reachable".into(),
-                power: state.power.clone(),
-                dimmer: state.dimmer,
-                mode: state.mode.clone(),
-                rgb_color: state.rgb_color.clone(),
-                color_temperature_kelvin: state.ct.map(ct_to_kelvin),
-                applied_profile_id: Self::profile(&state, &profiles),
-                checked_at: now(),
-            },
+            Ok(state) => {
+                let applied_profile_id = Self::profile(&state, &profiles);
+                LiveState {
+                    bulb_id: bulb.id,
+                    reachability: "reachable".into(),
+                    power: state.power,
+                    dimmer: state.dimmer,
+                    rgb_color: state.rgb_color,
+                    white_channels: state.white_channels,
+                    color_temperature_mired: state.ct,
+                    color_temperature_kelvin: state.ct.map(ct_to_kelvin),
+                    applied_profile_id,
+                    checked_at: now(),
+                }
+            }
             Err(status) => {
                 error!(
                     bulb_id = %bulb.id,
@@ -212,7 +213,7 @@ fn rgb_matches_dimmer_scaled_color(
 
 fn parse_rgb(value: Option<&str>) -> Option<[u8; 3]> {
     let value = value?.strip_prefix('#')?;
-    (value.len() == 6 || value.len() == 10)
+    (value.len() == 6 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
         .then(|| {
             Some([
                 u8::from_str_radix(&value[0..2], 16).ok()?,
@@ -225,7 +226,33 @@ fn parse_rgb(value: Option<&str>) -> Option<[u8; 3]> {
 
 #[cfg(test)]
 mod tests {
-    use super::rgb_matches_dimmer_scaled_color;
+    use super::*;
+
+    #[test]
+    fn profile_uses_white_channels_instead_of_the_retained_ct_alone() {
+        let profile = Profile {
+            id: Uuid::nil(),
+            name: "Warm white".into(),
+            dimmer: 40,
+            mode: "color_temperature".into(),
+            rgb_color: None,
+            color_temperature_kelvin: Some(2000),
+            mixed_color: None,
+            created_at: String::new(),
+            updated_at: String::new(),
+        };
+        let mut state = DeviceState {
+            power: Some("on".into()),
+            dimmer: Some(40),
+            rgb_color: Some("#000000".into()),
+            white_channels: Some("0066".into()),
+            ct: Some(500),
+        };
+        let profiles = [profile];
+        assert_eq!(StatusService::profile(&state, &profiles), Some(Uuid::nil()));
+        state.white_channels = Some("0000".into());
+        assert_eq!(StatusService::profile(&state, &profiles), None);
+    }
 
     #[test]
     fn rgb_profile_matches_device_color_scaled_by_dimmer() {

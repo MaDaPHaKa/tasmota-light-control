@@ -33,8 +33,9 @@ export interface LiveBulbState {
   reachability: Reachability;
   power: 'on' | 'off' | null;
   dimmer: number | null;
-  mode: LightMode | null;
   rgbColor: string | null;
+  whiteChannels: string | null;
+  colorTemperatureMired: number | null;
   colorTemperatureKelvin: number | null;
   appliedProfileId: Uuid | null;
   checkedAt: Timestamp;

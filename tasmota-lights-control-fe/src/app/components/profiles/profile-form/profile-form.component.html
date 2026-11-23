@@ -15,7 +15,8 @@
       dimmer: showClientError('dimmer') ? clientError('dimmer') : null,
       mode: showClientError('mode') ? clientError('mode') : null,
       rgbColor: showClientError('rgbColor') ? clientError('rgbColor') : null,
-      colorTemperatureKelvin: showClientError('colorTemperatureKelvin') ? clientError('colorTemperatureKelvin') : null
+      colorTemperatureKelvin: showClientError('colorTemperatureKelvin') ? clientError('colorTemperatureKelvin') : null,
+      mixedColor: showClientError('mixedColor') ? clientError('mixedColor') : null
     }"
     (valueChange)="updateConfiguration($event)"
     (fieldChange)="configurationChanged($event)"

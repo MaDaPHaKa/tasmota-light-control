@@ -12,8 +12,16 @@
               [attr.aria-label]="'RGB color ' + profile.rgbColor"
               [attr.title]="profile.rgbColor"
             ></span>
-          } @else {
+          } @else if (profile.mode === 'color_temperature') {
             {{ profile.colorTemperatureKelvin }} K
+          } @else {
+            {{ profile.mixedColor }}
+            <span
+              class="color-swatch"
+              [style.background-color]="profile.mixedColor.slice(0, 7)"
+              [attr.aria-label]="'RGB channels ' + profile.mixedColor.slice(0, 7)"
+              [attr.title]="profile.mixedColor.slice(0, 7)"
+            ></span>
           } · {{ profile.dimmer }}%</span
         >
       </div>

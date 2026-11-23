@@ -163,8 +163,10 @@ impl ControlService {
             .await?;
         let command = command::properties(
             Some(profile.dimmer),
-            Some(&profile.mode),
-            profile.rgb_color.as_deref(),
+            profile
+                .mixed_color
+                .as_deref()
+                .or(profile.rgb_color.as_deref()),
             profile.color_temperature_kelvin,
             settings.fade,
             settings.speed,
@@ -201,9 +203,11 @@ impl ControlService {
             .await?;
         let command = command::properties(
             Some(settings.dimmer),
-            Some(&settings.mode),
-            settings.rgb_color.0.as_deref(),
-            settings.color_temperature_kelvin.0,
+            settings
+                .mixed_color
+                .as_deref()
+                .or(settings.rgb_color.as_deref()),
+            settings.color_temperature_kelvin,
             settings.fade,
             settings.speed,
         );
@@ -231,9 +235,11 @@ impl ControlService {
             .await?;
         let command = command::properties(
             Some(settings.dimmer),
-            Some(&settings.mode),
-            settings.rgb_color.0.as_deref(),
-            settings.color_temperature_kelvin.0,
+            settings
+                .mixed_color
+                .as_deref()
+                .or(settings.rgb_color.as_deref()),
+            settings.color_temperature_kelvin,
             settings.fade,
             settings.speed,
         );
@@ -246,6 +252,7 @@ impl ControlService {
         dimmer: Option<i64>,
         rgb_color: Option<String>,
         color_temperature_kelvin: Option<i64>,
+        mixed_color: Option<String>,
     ) -> AppResult<Operation> {
         Self::validate_ids(&ids)?;
         let _permit = self
@@ -253,8 +260,12 @@ impl ControlService {
             .clone()
             .try_acquire_owned()
             .map_err(|_| AppError::TooMany)?;
-        let (dimmer, rgb_color, color_temperature_kelvin) =
-            crate::domain::validation::properties(dimmer, rgb_color, color_temperature_kelvin)?;
+        let (dimmer, color, kelvin) = crate::domain::validation::properties(
+            dimmer,
+            rgb_color,
+            color_temperature_kelvin,
+            mixed_color,
+        )?;
         let snapshot_ids = ids;
         let bulbs = self
             .bulbs
@@ -268,9 +279,8 @@ impl ControlService {
             .await?;
         let command = crate::adapters::tasmota::command::properties(
             dimmer,
-            None,
-            rgb_color.as_deref(),
-            color_temperature_kelvin,
+            color.as_deref(),
+            kelvin,
             None,
             None,
         );
