@@ -20,6 +20,12 @@ Backend defaults to `127.0.0.1:8080`. Put nginx in front for LAN access. Backend
 - SQLite migration 4 preserves existing profiles and reset settings. Legacy mixed writes with `rgbColor` and `colorTemperatureKelvin` still work; mixed reads return `mixedColor`.
 - Bulb status shows `rgbColor` (`#RRGGBB`) and `colorTemperatureMired` (Tasmota's native CT setpoint, not a measurement). The API also retains `whiteChannels` (`CWWW`) and `colorTemperatureKelvin`.
 
+## Bulb configuration
+
+- **Settings → Bulb configuration** reads `Fade` and `Speed` from the selected bulb with [`Status 11`](https://github.com/arendst/Tasmota/blob/v11.1.0/tasmota/xdrv_04_light.ino#L1495-L1504).
+- `GET /api/v1/bulbs/{bulbId}/settings` returns live `{fade, speed}`. `PUT` accepts `fade` (0 or 1) and `speed` (1–40); it sends the two [commands](https://github.com/arendst/Tasmota/blob/v11.1.0/tasmota/xdrv_04_light.ino#L3061-L3119) and checks both replies. If one fails, reload the bulb settings: the first may already have changed.
+- Color, dimmer, profiles, reset and direct links never send Fade or Speed. `/api/v1/settings/reset` retains their legacy fields for API compatibility only.
+
 ## Build
 
 From repository root:

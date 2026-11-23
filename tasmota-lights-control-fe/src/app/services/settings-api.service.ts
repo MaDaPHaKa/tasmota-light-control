@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ResetSettings } from '@model/settings.model';
+import { BulbSettings, ResetSettings } from '@model/settings.model';
+import { Uuid } from '@model/bulb.model';
 import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class SettingsApiService {
@@ -11,5 +12,11 @@ export class SettingsApiService {
   }
   replaceResetSettings(settings: ResetSettings) {
     return this.http.put<ResetSettings>(this.url, settings);
+  }
+  getBulbSettings(id: Uuid) {
+    return this.http.get<BulbSettings>(`${environment.baseUrl}/api/v1/bulbs/${id}/settings`);
+  }
+  replaceBulbSettings(id: Uuid, settings: BulbSettings) {
+    return this.http.put<BulbSettings>(`${environment.baseUrl}/api/v1/bulbs/${id}/settings`, settings);
   }
 }

@@ -6,6 +6,9 @@
 <section class="settings-card">
   <h2>Reset defaults</h2>
   <p>These values apply when you reset one or more bulbs.</p>
+  @if (failure() && !resetSettings()) {
+    <p class="settings-error" role="alert">{{ failure()?.message || 'Could not load reset defaults.' }}</p>
+  }
   <form novalidate (submit)="$event.preventDefault(); save()">
     <app-light-configuration
       [value]="model()"
@@ -20,23 +23,74 @@
       (valueChange)="updateConfiguration($event)"
       (fieldChange)="configurationChanged($event)"
     />
-    <fieldset class="fade-settings">
-       <legend>Fading</legend>
-      <mat-form-field appearance="outline">
-        <mat-label>Fade</mat-label>
-        <input #formControl matInput type="number" placeholder="Optional" [formField]="settingsForm.fade" (input)="changed('fade')" />
-        @if (showClientError('fade')) { <mat-error>{{ clientError('fade') }}</mat-error> }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Speed</mat-label>
-        <input #formControl matInput type="number" placeholder="Optional" [formField]="settingsForm.speed" (input)="changed('speed')" />
-        @if (showClientError('speed')) { <mat-error>{{ clientError('speed') }}</mat-error> }
-      </mat-form-field>
-    </fieldset>
     <div class="section-recap">
-      <button mat-flat-button color="primary" type="submit" [disabled]="pending() || settingsForm().invalid()">
-        {{ pending() ? 'Saving…' : 'Save      settings' }}
+      <button mat-flat-button color="primary" type="submit" [disabled]="pending() || !resetSettings() || settingsForm().invalid()">
+        {{ pending() ? 'Saving…' : 'Save reset defaults' }}
       </button>
     </div>
   </form>
+</section>
+
+<section class="settings-card bulb-settings-card" aria-labelledby="bulb-settings-title">
+  <h2 id="bulb-settings-title">Bulb configuration</h2>
+  <p>Fade and speed are saved directly to one selected bulb.</p>
+
+  @if (bulbsLoadState() === 'loading' && !bulbs().length) {
+    <p role="status" aria-live="polite">Loading bulbs…</p>
+  } @else if (bulbsLoadState() === 'error' && !bulbs().length) {
+    <p class="settings-error" role="alert">Could not load bulbs. Refresh the page to try again.</p>
+  } @else if (bulbsLoadState() === 'loaded' && !bulbs().length) {
+    <p role="status">No bulbs available. Add a bulb before configuring fade and speed.</p>
+  }
+
+  @if (bulbs().length) {
+    <mat-form-field appearance="outline">
+      <mat-label>Bulb</mat-label>
+      <mat-select [value]="selectedBulbId()" [disabled]="bulbSettingsSaving()" (selectionChange)="selectBulb($event.value)">
+        @for (bulb of bulbs(); track bulb.id) {
+          <mat-option [value]="bulb.id">{{ bulb.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (bulbSettingsLoadState() === 'loading') {
+      <p role="status" aria-live="polite">Loading settings from the selected bulb…</p>
+    } @else if (bulbSettingsLoadState() === 'error') {
+      <p class="settings-error" role="alert">
+        {{ bulbSettingsFailure()?.message || 'Could not read settings from this bulb.' }}
+        Reload to read the current values before saving again.
+      </p>
+      <button mat-button type="button" (click)="reloadBulbSettings()" [disabled]="bulbSettingsSaving()">
+        Reload from bulb
+      </button>
+    } @else if (bulbSettingsLoadState() === 'loaded') {
+      <form novalidate (submit)="$event.preventDefault(); saveBulbSettings()">
+        <fieldset [disabled]="bulbSettingsSaving()">
+          <legend>Fade and speed</legend>
+          <mat-form-field appearance="outline">
+            <mat-label>Fade</mat-label>
+            <mat-select [formField]="bulbSettingsForm.fade">
+              <mat-option [value]="0">Disabled (0)</mat-option>
+              <mat-option [value]="1">Enabled (1)</mat-option>
+            </mat-select>
+            @if (bulbSettingsForm.fade().invalid() && bulbSettingsForm.fade().touched()) {
+              <mat-error>{{ bulbSettingsForm.fade().errors()[0]?.message }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Speed</mat-label>
+            <input matInput type="number" step="1" [formField]="bulbSettingsForm.speed" />
+            @if (bulbSettingsForm.speed().invalid() && bulbSettingsForm.speed().touched()) {
+              <mat-error>{{ bulbSettingsForm.speed().errors()[0]?.message }}</mat-error>
+            }
+          </mat-form-field>
+          <div class="section-recap">
+            <button mat-flat-button color="primary" type="submit" [disabled]="bulbSettingsSaving() || bulbSettingsForm().invalid()">
+              {{ bulbSettingsSaving() ? 'Saving…' : 'Save bulb settings' }}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    }
+  }
 </section>

@@ -25,6 +25,10 @@ pub fn router(state: AppState, body_limit: usize) -> Router {
         )
         .route("/bulbs/{bulbId}/test", post(status::saved_test))
         .route("/bulbs/{bulbId}/status", get(status::one))
+        .route(
+            "/bulbs/{bulbId}/settings",
+            get(settings::get_bulb).put(settings::put_bulb),
+        )
         .route("/profiles", get(profiles::list).post(profiles::create))
         .route(
             "/profiles/{profileId}",

@@ -8,6 +8,12 @@ export interface MixedResetSettings {
   speed: number | null;
 }
 export type ResetSettings = RgbResetSettings | ColorTemperatureResetSettings | MixedResetSettings;
+
+export interface BulbSettings {
+  fade: 0 | 1;
+  speed: number;
+}
+
 export interface RgbResetSettings {
   dimmer: number;
   mode: 'rgb';

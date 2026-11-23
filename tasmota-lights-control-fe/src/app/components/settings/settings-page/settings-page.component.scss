@@ -105,8 +105,10 @@ h2 {
   }
 }
 
-.fade-settings{
-  display: flex;
-  gap: 0.3125rem;
-  align-items: center;
+.bulb-settings-card {
+  margin-top: 1.5rem;
+}
+
+.settings-error {
+  color: var(--color-error, #b3261e);
 }

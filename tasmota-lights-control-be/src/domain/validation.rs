@@ -1,5 +1,8 @@
 use crate::{
-    domain::{profile::LightInput, settings::SettingsInput},
+    domain::{
+        profile::LightInput,
+        settings::{BulbSettings, BulbSettingsInput, SettingsInput},
+    },
     error::{AppError, AppResult, validation},
 };
 use std::collections::BTreeMap;
@@ -187,16 +190,7 @@ pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
         color_temperature_kelvin: input.color_temperature_kelvin,
         mixed_color: input.mixed_color,
     })?;
-    let mut fields = BTreeMap::new();
-    if input.fade.is_some_and(|value| !(0..=1).contains(&value)) {
-        fields.insert("fade".into(), "Fade must be 0 or 1".into());
-    }
-    if input.speed.is_some_and(|value| !(1..=40).contains(&value)) {
-        fields.insert("speed".into(), "Speed must be between 1 and 40".into());
-    }
-    if !fields.is_empty() {
-        return Err(AppError::Validation(fields));
-    }
+    validate_fade_speed(input.fade, input.speed)?;
     Ok((
         dimmer,
         mode,
@@ -214,6 +208,29 @@ pub fn settings(input: SettingsInput) -> AppResult<ValidSettings> {
             .transpose()
             .map_err(|_| AppError::Internal)?,
     ))
+}
+
+pub fn bulb_settings(input: BulbSettingsInput) -> AppResult<BulbSettings> {
+    validate_fade_speed(Some(input.fade), Some(input.speed))?;
+    Ok(BulbSettings {
+        fade: input.fade as u8,
+        speed: input.speed as u8,
+    })
+}
+
+fn validate_fade_speed(fade: Option<i64>, speed: Option<i64>) -> AppResult<()> {
+    let mut fields = BTreeMap::new();
+    if fade.is_some_and(|value| !(0..=1).contains(&value)) {
+        fields.insert("fade".into(), "Fade must be 0 or 1".into());
+    }
+    if speed.is_some_and(|value| !(1..=40).contains(&value)) {
+        fields.insert("speed".into(), "Speed must be between 1 and 40".into());
+    }
+    if fields.is_empty() {
+        Ok(())
+    } else {
+        Err(AppError::Validation(fields))
+    }
 }
 
 pub fn properties(
@@ -312,5 +329,17 @@ mod tests {
             assert_eq!(color.as_deref(), Some(expected));
             assert_eq!(ct, None);
         }
+    }
+
+    #[test]
+    fn bulb_settings_reject_invalid_fade_and_speed() {
+        let error = bulb_settings(BulbSettingsInput {
+            fade: -1,
+            speed: 41,
+        })
+        .unwrap_err();
+        assert!(
+            matches!(error, AppError::Validation(fields) if fields.len() == 2 && fields.contains_key("fade") && fields.contains_key("speed"))
+        );
     }
 }

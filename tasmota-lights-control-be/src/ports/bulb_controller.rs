@@ -51,12 +51,12 @@ pub enum Command {
     Status,
     Color,
     ColorTemperature,
+    SetFade(u8),
+    SetSpeed(u8),
     ApplyProperties {
         dimmer: Option<u8>,
         color: Option<String>,
         ct: Option<u16>,
-        fade: Option<u8>,
-        speed: Option<u8>,
     },
 }
 
@@ -67,20 +67,10 @@ impl Command {
             Self::Status => "Status 11".into(),
             Self::Color => "Color".into(),
             Self::ColorTemperature => "CT".into(),
-            Self::ApplyProperties {
-                dimmer,
-                color,
-                ct,
-                fade,
-                speed,
-            } => {
+            Self::SetFade(value) => format!("Fade {value}"),
+            Self::SetSpeed(value) => format!("Speed {value}"),
+            Self::ApplyProperties { dimmer, color, ct } => {
                 let mut commands = Vec::new();
-                if let Some(fade) = fade {
-                    commands.push(format!("Fade {fade}"));
-                }
-                if let Some(speed) = speed {
-                    commands.push(format!("Speed {speed}"));
-                }
                 if let Some(color) = color {
                     commands.push(format!("Color {color}"));
                 }

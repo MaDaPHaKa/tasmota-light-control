@@ -1,4 +1,4 @@
-use crate::ports::bulb_controller::DeviceState;
+use crate::{domain::settings::BulbSettings, ports::bulb_controller::DeviceState};
 use serde_json::{Map, Value};
 use std::fmt::Write;
 
@@ -45,6 +45,31 @@ pub fn status(value: &Value) -> DeviceState {
         .filter(|value| (153..=500).contains(value))
         .map(|value| value as u16);
     state
+}
+
+pub fn bulb_settings(value: &Value) -> Option<BulbSettings> {
+    let status = object(value.as_object()?, "StatusSTS")?;
+    Some(BulbSettings {
+        fade: fade(status)?,
+        speed: speed(status)?,
+    })
+}
+
+pub fn fade(values: &Map<String, Value>) -> Option<u8> {
+    let state = text(values, &["Fade"])?;
+    if state.eq_ignore_ascii_case("ON") {
+        Some(1)
+    } else if state.eq_ignore_ascii_case("OFF") {
+        Some(0)
+    } else {
+        None
+    }
+}
+
+pub fn speed(values: &Map<String, Value>) -> Option<u8> {
+    number(values, &["Speed"])
+        .filter(|value| (1..=40).contains(value))
+        .map(|value| value as u8)
 }
 
 fn find_status_object(values: &Map<String, Value>) -> Option<&Map<String, Value>> {
@@ -187,5 +212,15 @@ mod tests {
         );
         assert_eq!(status(&json!({"Color":"12345z6789"})).rgb_color, None);
         assert_eq!(status(&json!({"CT":333})).ct, Some(333));
+    }
+
+    #[test]
+    fn bulb_settings_read_firmware_values_without_defaults() {
+        let response = json!({"StatusSTS": {"Fade": "OFF", "Speed": 40}});
+        let settings = bulb_settings(&response).unwrap();
+        assert_eq!((settings.fade, settings.speed), (0, 40));
+        assert!(bulb_settings(&json!({"StatusSTS": {"Fade": "ON"}})).is_none());
+        assert!(bulb_settings(&json!({"StatusSTS": {"Fade": "ON", "Speed": 41}})).is_none());
+        assert!(bulb_settings(&json!({"StatusSTS": {"Fade": "Unknown", "Speed": 4}})).is_none());
     }
 }

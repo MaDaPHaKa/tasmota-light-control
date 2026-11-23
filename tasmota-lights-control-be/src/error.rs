@@ -1,3 +1,4 @@
+use crate::domain::control::ResultCode;
 use axum::{
     Json,
     extract::{FromRequest, FromRequestParts, Path, Request},
@@ -21,6 +22,7 @@ pub enum AppError {
     Conflict(BTreeMap<String, String>),
     TooMany,
     Unavailable,
+    Device(ResultCode),
     Internal,
 }
 pub type AppResult<T> = Result<T, AppError>;
@@ -73,6 +75,16 @@ impl IntoResponse for AppError {
                 StatusCode::SERVICE_UNAVAILABLE,
                 "service_unavailable",
                 "Service unavailable",
+                None,
+            ),
+            Self::Device(result) => (
+                if matches!(result, ResultCode::Timeout) {
+                    StatusCode::GATEWAY_TIMEOUT
+                } else {
+                    StatusCode::BAD_GATEWAY
+                },
+                "device_error",
+                result.message(),
                 None,
             ),
             Self::Internal => (

@@ -10,7 +10,8 @@ use crate::{
     domain::{
         bulb::Bulb,
         control::{Operation, ResultCode, Summary, TargetResult},
-        validation::now,
+        settings::{BulbSettings, BulbSettingsInput},
+        validation::{bulb_settings, now},
     },
     error::{AppError, AppResult, validation},
     ports::bulb_controller::{BulbController, Command},
@@ -144,7 +145,7 @@ impl ControlService {
             .try_acquire_owned()
             .map_err(|_| AppError::TooMany)?;
         let snapshot_ids = ids.clone();
-        let (profile, settings, bulbs) = self
+        let (profile, bulbs) = self
             .bulbs
             .db
             .run(move |connection| {
@@ -152,13 +153,12 @@ impl ControlService {
                     .transaction_with_behavior(TransactionBehavior::Deferred)
                     .map_err(|_| AppError::Internal)?;
                 let profile = profile_repository::get(&transaction, profile_id)?;
-                let settings = settings_repository::get(&transaction)?;
                 let bulbs = snapshot_ids
                     .iter()
                     .map(|id| bulb_repository::get(&transaction, *id))
                     .collect::<AppResult<Vec<_>>>()?;
                 transaction.commit().map_err(|_| AppError::Internal)?;
-                Ok((profile, settings, bulbs))
+                Ok((profile, bulbs))
             })
             .await?;
         let command = command::properties(
@@ -168,8 +168,6 @@ impl ControlService {
                 .as_deref()
                 .or(profile.rgb_color.as_deref()),
             profile.color_temperature_kelvin,
-            settings.fade,
-            settings.speed,
         );
         Ok(self
             .execute("apply_profile", Some(profile.id), bulbs, command)
@@ -208,8 +206,6 @@ impl ControlService {
                 .as_deref()
                 .or(settings.rgb_color.as_deref()),
             settings.color_temperature_kelvin,
-            settings.fade,
-            settings.speed,
         );
         Ok(self.execute("reset", None, bulbs, command).await)
     }
@@ -240,8 +236,6 @@ impl ControlService {
                 .as_deref()
                 .or(settings.rgb_color.as_deref()),
             settings.color_temperature_kelvin,
-            settings.fade,
-            settings.speed,
         );
         Ok(self.execute("reset_all", None, bulbs, command).await)
     }
@@ -277,13 +271,33 @@ impl ControlService {
                     .collect::<AppResult<Vec<_>>>()
             })
             .await?;
-        let command = crate::adapters::tasmota::command::properties(
-            dimmer,
-            color.as_deref(),
-            kelvin,
-            None,
-            None,
-        );
+        let command = command::properties(dimmer, color.as_deref(), kelvin);
         Ok(self.execute("set_properties", None, bulbs, command).await)
+    }
+
+    pub async fn bulb_settings(
+        &self,
+        id: Uuid,
+        input: Option<BulbSettingsInput>,
+    ) -> AppResult<BulbSettings> {
+        let update = input.map(bulb_settings).transpose()?;
+        let _permit = if update.is_some() {
+            Some(
+                self.admission
+                    .try_acquire()
+                    .map_err(|_| AppError::TooMany)?,
+            )
+        } else {
+            None
+        };
+        let bulb = self.bulbs.get(id).await?;
+        let endpoint = self
+            .client
+            .policy
+            .endpoint(&bulb.ip_address, i64::from(bulb.port))?;
+        self.client
+            .bulb_settings(endpoint, update)
+            .await
+            .map_err(AppError::Device)
     }
 }

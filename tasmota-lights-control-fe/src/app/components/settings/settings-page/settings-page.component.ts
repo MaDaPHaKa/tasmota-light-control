@@ -3,19 +3,22 @@ import {
   Component,
   ElementRef,
   DestroyRef,
+  effect,
   inject,
   signal,
   viewChild,
   viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
-import { FormField, form, required, validate } from '@angular/forms/signals';
+import { finalize, Subscription } from 'rxjs';
+import { FormField, disabled, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { ApiFailure } from '@model/api-error.model';
-import { ResetSettings } from '@model/settings.model';
+import { BulbSettings, ResetSettings } from '@model/settings.model';
+import { Uuid } from '@model/bulb.model';
 import {
   normalizeMixedColorHex,
   validateIntegerRange,
@@ -26,8 +29,10 @@ import { SettingsApiService } from '@services/settings-api.service';
 import { DEFAULT_MIXED_COLOR, EditableLightConfiguration, LightConfigurationComponent, LightConfigurationField } from '@components/shared/light-configuration/light-configuration.component';
 import { SnackbarService } from '@services/snackbar.service';
 import { PageHeader } from '@components/shared/page-header/page-header.component';
+import { AppStoreService } from '@services/app-store.service';
 
-type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'mixedColor' | 'fade' | 'speed';
+type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' | 'mixedColor';
+type BulbSettingsLoadState = 'idle' | 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-settings-page',
@@ -37,6 +42,7 @@ type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' |
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     LightConfigurationComponent,
     PageHeader,
   ],
@@ -46,6 +52,7 @@ type SettingsField = 'dimmer' | 'mode' | 'rgbColor' | 'colorTemperatureKelvin' |
 })
 export class SettingsPageComponent {
   private readonly api = inject(SettingsApiService);
+  private readonly store = inject(AppStoreService);
   private readonly snackbar = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly model = signal({
@@ -54,13 +61,20 @@ export class SettingsPageComponent {
     rgbColor: '#88C0D0',
     colorTemperatureKelvin: 3000,
     mixedColor: DEFAULT_MIXED_COLOR,
-    fade: 1 as number | null,
-    speed: 4 as number | null,
   });
+  protected readonly bulbSettingsModel = signal({ fade: 1 as 0 | 1, speed: 4 });
   protected readonly pending = signal(false);
   protected readonly failure = signal<ApiFailure | null>(null);
+  protected readonly resetSettings = signal<ResetSettings | null>(null);
+  protected readonly bulbs = this.store.bulbs;
+  protected readonly bulbsLoadState = this.store.bulbsLoadState;
+  protected readonly selectedBulbId = signal<Uuid | null>(null);
+  protected readonly bulbSettingsLoadState = signal<BulbSettingsLoadState>('idle');
+  protected readonly bulbSettingsSaving = signal(false);
+  protected readonly bulbSettingsFailure = signal<ApiFailure | null>(null);
   protected readonly controls = viewChildren<ElementRef<HTMLElement>>('formControl');
   private readonly lightConfiguration = viewChild(LightConfigurationComponent);
+  private bulbSettingsRequest?: Subscription;
   protected readonly settingsForm = form(this.model, (p) => {
     required(p.dimmer, { message: 'Dimmer is required' });
     validate(p.dimmer, ({ value }) => this.serverValidation('dimmer') ?? validateIntegerRange(value(), 1, 100));
@@ -76,16 +90,24 @@ export class SettingsPageComponent {
     validate(p.mixedColor, ({ value }) =>
       this.model().mode === 'mixed' ? this.serverValidation('mixedColor') ?? validateMixedColorHex(value()) : undefined,
     );
-    validate(p.fade, ({ value }) => {
-      const current = value();
-      return current === null || Number.isNaN(current) ? undefined : validateIntegerRange(current, 0, 1);
-    });
-    validate(p.speed, ({ value }) => {
-      const current = value();
-      return current === null || Number.isNaN(current) ? undefined : validateIntegerRange(current, 1, 40);
-    });
+  });
+  protected readonly bulbSettingsForm = form(this.bulbSettingsModel, (p) => {
+    disabled(p.fade, () => this.bulbSettingsSaving());
+    disabled(p.speed, () => this.bulbSettingsSaving());
+    required(p.fade, { message: 'Fade is required' });
+    validate(p.fade, ({ value }) => validateIntegerRange(value(), 0, 1));
+    required(p.speed, { message: 'Speed is required' });
+    validate(p.speed, ({ value }) => validateIntegerRange(value(), 1, 40));
   });
   constructor() {
+    effect(() => {
+      const bulbs = this.bulbs();
+      const selectedId = this.selectedBulbId();
+      if (!selectedId && bulbs.length) this.selectBulb(bulbs[0].id);
+      else if (selectedId && !bulbs.some((bulb) => bulb.id === selectedId)) {
+        this.selectBulb(bulbs[0]?.id ?? null);
+      }
+    });
     this.pending.set(true);
     this.api
       .getResetSettings()
@@ -133,15 +155,15 @@ export class SettingsPageComponent {
     return message ? { kind: 'server', message } : undefined;
   }
   protected save() {
-    if (this.pending()) return;
+    const resetSettings = this.resetSettings();
+    if (this.pending() || !resetSettings) return;
     this.settingsForm().markAsTouched();
     if (this.settingsForm().invalid()) {
       queueMicrotask(() => this.focusFirstInvalid());
       return;
     }
     const v = this.model();
-    const fade = Number.isInteger(v.fade) ? v.fade : null;
-    const speed = Number.isInteger(v.speed) ? v.speed : null;
+    const { fade, speed } = resetSettings;
     const settings: ResetSettings =
       v.mode === 'rgb'
         ? {
@@ -188,15 +210,88 @@ export class SettingsPageComponent {
       });
   }
   private setSettings(v: ResetSettings) {
+    this.resetSettings.set(v);
     this.settingsForm().reset({
       dimmer: v.dimmer,
       mode: v.mode,
       rgbColor: v.mode === 'rgb' ? v.rgbColor : '#88C0D0',
       colorTemperatureKelvin: v.mode === 'color_temperature' ? v.colorTemperatureKelvin : 3000,
       mixedColor: v.mode === 'mixed' ? v.mixedColor : DEFAULT_MIXED_COLOR,
-      fade: v.fade ?? null,
-      speed: v.speed ?? null,
     });
+  }
+  protected selectBulb(id: Uuid | null) {
+    if (id === this.selectedBulbId()) return;
+    this.selectedBulbId.set(id);
+    if (!id) {
+      this.bulbSettingsRequest?.unsubscribe();
+      this.bulbSettingsLoadState.set('idle');
+      this.bulbSettingsFailure.set(null);
+      return;
+    }
+    this.loadBulbSettings(id);
+  }
+  private loadBulbSettings(id: Uuid) {
+    this.bulbSettingsRequest?.unsubscribe();
+    this.bulbSettingsFailure.set(null);
+    this.bulbSettingsLoadState.set('loading');
+    this.bulbSettingsRequest = this.api
+      .getBulbSettings(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (settings) => {
+          if (this.selectedBulbId() !== id) return;
+          this.setBulbSettings(settings);
+          this.bulbSettingsLoadState.set('loaded');
+        },
+        error: (failure: ApiFailure) => {
+          if (this.selectedBulbId() !== id) return;
+          this.bulbSettingsFailure.set(failure);
+          this.bulbSettingsLoadState.set('error');
+          this.snackbar.failure(failure, 'Could not load settings from this bulb.');
+        },
+      });
+  }
+  protected reloadBulbSettings() {
+    const id = this.selectedBulbId();
+    if (id) this.loadBulbSettings(id);
+  }
+  protected saveBulbSettings() {
+    const id = this.selectedBulbId();
+    if (!id || this.bulbSettingsSaving() || this.bulbSettingsLoadState() !== 'loaded') return;
+    this.bulbSettingsForm().markAsTouched();
+    if (this.bulbSettingsForm().invalid()) return;
+    const settings: BulbSettings = {
+      fade: this.bulbSettingsModel().fade,
+      speed: this.bulbSettingsModel().speed,
+    };
+    const bulbName = this.bulbs().find((bulb) => bulb.id === id)?.name ?? 'Bulb';
+    this.bulbSettingsSaving.set(true);
+    this.bulbSettingsFailure.set(null);
+    this.api
+      .replaceBulbSettings(id, settings)
+      .pipe(
+        finalize(() => this.bulbSettingsSaving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (confirmed) => {
+          if (this.selectedBulbId() === id) {
+            this.setBulbSettings(confirmed);
+            this.bulbSettingsLoadState.set('loaded');
+          }
+          this.snackbar.success(`Settings saved to ${bulbName}.`);
+        },
+        error: (failure: ApiFailure) => {
+          if (this.selectedBulbId() === id) {
+            this.bulbSettingsFailure.set(failure);
+            this.bulbSettingsLoadState.set('error');
+          }
+          this.snackbar.failure(failure, `Could not save settings to ${bulbName}.`);
+        },
+      });
+  }
+  private setBulbSettings(settings: BulbSettings) {
+    this.bulbSettingsForm().reset({ fade: settings.fade, speed: settings.speed });
   }
   private focusFirstInvalid() {
     const control = this.controls().find(

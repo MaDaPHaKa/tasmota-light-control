@@ -1,7 +1,7 @@
 pub use crate::ports::bulb_controller::PolicyState;
 use crate::{
-    adapters::tasmota::parser::{rejected, status as parse_status},
-    domain::control::ResultCode,
+    adapters::tasmota::parser,
+    domain::{control::ResultCode, settings::BulbSettings},
     error::{AppError, AppResult},
     ports::bulb_controller::{BulbController, Command, DeviceState, Endpoint},
 };
@@ -90,7 +90,7 @@ impl TasmotaClient {
             if !value.is_object() {
                 return Err(ResultCode::InvalidResponse);
             }
-            if rejected(&value) {
+            if parser::rejected(&value) {
                 return Err(ResultCode::DeviceError);
             }
             Ok(value)
@@ -107,6 +107,34 @@ impl TasmotaClient {
         }
         result?
     }
+
+    pub async fn bulb_settings(
+        &self,
+        endpoint: Endpoint,
+        update: Option<BulbSettings>,
+    ) -> Result<BulbSettings, ResultCode> {
+        let Some(settings) = update else {
+            let value = self.request(endpoint, Command::Status).await?;
+            return parser::bulb_settings(&value).ok_or(ResultCode::InvalidResponse);
+        };
+
+        // Backlog acknowledges queueing, not the individual setting changes.
+        let value = self
+            .request(endpoint.clone(), Command::SetFade(settings.fade))
+            .await?;
+        let fade = value.as_object().and_then(parser::fade);
+        if fade != Some(settings.fade) {
+            return Err(ResultCode::InvalidResponse);
+        }
+        let value = self
+            .request(endpoint, Command::SetSpeed(settings.speed))
+            .await?;
+        let speed = value.as_object().and_then(parser::speed);
+        if speed != Some(settings.speed) {
+            return Err(ResultCode::InvalidResponse);
+        }
+        Ok(settings)
+    }
 }
 
 impl BulbController for TasmotaClient {
@@ -118,13 +146,13 @@ impl BulbController for TasmotaClient {
 
     async fn status(&self, endpoint: Endpoint) -> Result<DeviceState, ResultCode> {
         let deadline = Instant::now() + self.timeout;
-        let mut state = parse_status(&self.request(endpoint.clone(), Command::Status).await?);
+        let mut state = parser::status(&self.request(endpoint.clone(), Command::Status).await?);
         if state.rgb_color.is_none()
             && state.white_channels.is_none()
             && let Ok(Ok(value)) =
                 timeout_at(deadline, self.request(endpoint.clone(), Command::Color)).await
         {
-            let color = parse_status(&value);
+            let color = parser::status(&value);
             state.rgb_color = color.rgb_color;
             state.white_channels = color.white_channels;
         }
@@ -133,7 +161,7 @@ impl BulbController for TasmotaClient {
             && let Ok(Ok(value)) =
                 timeout_at(deadline, self.request(endpoint, Command::ColorTemperature)).await
         {
-            state.ct = parse_status(&value).ct;
+            state.ct = parser::status(&value).ct;
         }
         Ok(state)
     }
